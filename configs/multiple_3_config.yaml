@@ -1,0 +1,13 @@
+experiment: multiples_of_3_experiment
+
+input_type: regex          # Options: "regex" or "bitstring_list"
+# If using regex
+regex: "(1(0(1)*0)*1|0)*"
+regex_complement: False
+
+system_sizes: [4,8, 12,16,20,24,28,32]
+methods: [ours, qiskit, ours_efficient, qualtran]                 
+ancilla_dim: 4      # Dimension of the ancilla register
+
+plotting: True
+plot_output: figs/multiples_of_3_experiment.pdf

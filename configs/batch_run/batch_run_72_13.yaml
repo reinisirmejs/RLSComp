@@ -1,0 +1,11 @@
+ancilla_dim: 16
+experiment: batch_run/dicke_72_13_state_benchmark_only_ours
+input_type: regex
+methods:
+- ours_efficient
+- ours
+plot_output: figs/batch_run.pdf
+plotting: false
+regex: (0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*
+system_sizes:
+- 72

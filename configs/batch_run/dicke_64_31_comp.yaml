@@ -1,0 +1,12 @@
+ancilla_dim: 32
+experiment: batch_run/dicke_64_31_comp
+input_type: regex
+methods:
+- ours_no_ancilla
+- ours_no_ancilla_rectangular
+- bartschi2019_dicke
+plot_output: figs/dicke_k_scaling.pdf
+plotting: false
+regex: (0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*1(0)*
+system_sizes:
+- 64

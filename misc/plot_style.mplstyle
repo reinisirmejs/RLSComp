@@ -1,0 +1,17 @@
+# my_style.mplstyle
+font.size: 10
+text.usetex : True
+font.family: serif
+font.serif: cm
+axes.titlesize: 12
+axes.labelsize: 10
+xtick.direction: in 
+ytick.direction: in
+xtick.labelsize: 10
+ytick.labelsize: 10
+legend.fontsize: 9
+figure.figsize: 8, 6
+lines.linewidth: 2
+axes.grid: False
+axes.prop_cycle: cycler(color=["#C1121F", "#D97706", "#7FE3C9", "#4ABCC5", "#3A7FB8", "#2B2D6E","#332288", "#117733", "#44AA99", "#88CCEE", "#DDCC77", "#CC6677", "#AA4499", "#882255"])
+

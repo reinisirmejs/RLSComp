@@ -1,0 +1,14 @@
+experiment: dicke_2_state_benchmark_complement
+
+input_type: regex          # Options: "regex" or "bitstring_list"
+# If using regex
+regex: "(0)*1(0)*1(0)*"
+
+regex_complement: True
+
+system_sizes: [4,6,8,10,12,14,16,20,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80,84,88,92,96,100]  # System sizes to benchmark
+methods: [SeqRLSP, TreeRLSP, SeqIsoRLSP, TreeIsoRLSP, qiskit,qualtran, gleinig_sparse]   # Options: "ours", "ours_efficient", "qiskit", "qualtran"          
+ancilla_dim: 4            # Dimension of the ancilla register
+
+plotting: True
+plot_output: figs/dicke_2_state_experiment_output_complement.pdf

@@ -1,0 +1,21 @@
+ancilla_dim: 8
+bitstrings:
+- '110111111010011011111111'
+- '000110101001001001101110'
+- '010001001001111101101111'
+- '010110000111011111111100'
+- '011111000010100000010111'
+- '100111011010000011001110'
+- '011111000010000000001110'
+- '010010001101111000001100'
+experiment: batch_run/rand_str_24_8_not_only_ours
+input_type: bitstring_list
+methods:
+- ours_efficient
+- ours
+- qiskit
+- qualtran
+plot_output: figs/rand_str_batch_run.pdf
+plotting: false
+system_sizes:
+- 24

@@ -1,0 +1,37 @@
+ancilla_dim: 32
+bitstrings:
+- '1000101110'
+- '0100010010'
+- '1110110001'
+- '0010011001'
+- '1010101100'
+- '1101101001'
+- '0011111100'
+- '1101110110'
+- '0101101000'
+- '0001010100'
+- '1011000100'
+- '0010110011'
+- '0011101111'
+- '0100000100'
+- '1101000110'
+- '1011011101'
+- '0110011110'
+- '0101001011'
+- '0010010000'
+- '1100010000'
+- '1101101111'
+- '0000001000'
+- '1000010011'
+- '0100111100'
+experiment: batch_run/rand_str_10_24_end
+input_type: bitstring_list
+methods:
+- ours_no_ancilla
+- qualtran
+- qiskit
+- gleinig_sparse
+plot_output: figs/rand_str_batch_run.pdf
+plotting: false
+system_sizes:
+- 10
