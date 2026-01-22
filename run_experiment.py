@@ -7,11 +7,10 @@ import time
 import matplotlib.pyplot as plt
 plt.style.use('misc/plot_style.mplstyle')
 
-from src.regex_utils import regex_to_dfa, list_to_acdfa_direct, accepted_strings, list_to_coeff_map
-from src.mps_utils import DFA_to_MPS, MPS_to_list, MPS_to_state, ACDFA_to_MPS, get_no_ancilla_unitaries_from_MPS, get_padded_mps, get_tree_decomposition, get_circuit_info_from_tree_rectangular
+from src.regex_utils import regex_to_dfa, list_to_acdfa_direct, accepted_strings
+from src.mps_utils import DFA_to_MPS, MPS_to_list, MPS_to_state, ACDFA_to_MPS
 from src.circuit_utils import  MPS_to_circuit_SeqRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
-#from circuit_utils import test_isometry_example
-from src.benchmarking_utils import get_qualtran_circuit_depth, get_our_cost_from_circ, get_qiskit_stats, get_bartschi2019_stats, get_gleinig_sparse_stats
+from src.benchmarking_utils import get_our_cost_from_circ, get_qiskit_stats, get_bartschi2019_stats, get_gleinig_sparse_stats, get_qualtran_sparse_stats
 
 
 def build_mps(input_type, regex, bitstrings, system_size,complement=False):
@@ -32,9 +31,7 @@ Run our Option 1 - SeqRLSP with unitaries constructed from unitary matrices or i
 def run_SeqRLSP(n,config):
     start = time.perf_counter()
     MPS_LIST = build_mps(config["input_type"], config.get("regex", None), config.get("bitstrings", []), n, complement=config.get("regex_complement", False))
-    # isometries are needed to benchmark our method
-    unitaries, _ = get_no_ancilla_unitaries_from_MPS(MPS_LIST)
-    our_circ = MPS_to_circuit_SeqRLSP(unitaries)
+    our_circ = MPS_to_circuit_SeqRLSP(MPS_LIST)
     depth, qubits, our_circ_transpiled = get_our_cost_from_circ(our_circ)
     end = time.perf_counter()
     our_time = end - start
@@ -47,9 +44,7 @@ def run_SeqRLSP(n,config):
 def run_SeqIsoRLSP(n,config):
     start = time.perf_counter()
     MPS_LIST = build_mps(config["input_type"], config.get("regex", None), config.get("bitstrings", []), n, complement=config.get("regex_complement", False))
-    # isometries are needed to benchmark our method
-    unitaries, _ = get_no_ancilla_unitaries_from_MPS(MPS_LIST,rectangular=True)
-    our_circ = MPS_to_circuit_SeqIsoRLSP(unitaries)
+    our_circ = MPS_to_circuit_SeqIsoRLSP(MPS_LIST)
     depth, qubits, our_circ_transpiled = get_our_cost_from_circ(our_circ)
     end = time.perf_counter()
     our_time = end - start
@@ -65,11 +60,7 @@ Run our option 2: The tree method with log(N) depth, no ancillas but non-local c
 def run_TreeRLSP(n,config):
     start = time.perf_counter()
     MPS_LIST = build_mps(config["input_type"], config.get("regex", None), config.get("bitstrings", []), n, complement=config.get("regex_complement", False))
-    padded_mps = get_padded_mps(MPS_LIST)
-    tree = get_tree_decomposition(padded_mps)
-    circuit_layers = get_circuit_info_from_tree_rectangular(n,tree)
-    #circuit_layers = update_circuit_tree_dictionary(n, tree, circuit_layers)
-    our_circ = Tree_to_circuit(n, circuit_layers)
+    our_circ = Tree_to_circuit(MPS_LIST)
     depth, qubits, our_circ_transpiled = get_our_cost_from_circ(our_circ)
     end = time.perf_counter()
     our_time = end - start
@@ -114,25 +105,20 @@ def run_qualtran(n,config):
     if config["input_type"] == "regex" and config.get("regex_complement", False) and n>14:
         print("Too large coefficient map for Qualtran, skipping...")
         return (np.nan, np.nan, np.nan, np.nan, np.nan, None)
-    
     if config["input_type"] =="regex":
         ancilla_dim = config.get("ancilla_dim", 2)
         approx_dicke_list_length = n**(ancilla_dim/2)
-
     #This block ensures that we do not run out of memory by calculating the Gleinig list strings unnecessairly
     if config["input_type"]=="regex" and approx_dicke_list_length>10**6:
         print("Too large coefficient map for Qualtran, skipping...")
         return (np.nan, np.nan, np.nan, np.nan, np.nan, None)
-    
     if config["input_type"] != "bitstring_list":
         bitstrings = accepted_strings(regex_to_dfa(config.get("regex", None),complement=config.get("regex_complement", False)), n)
     else:
-        bitstrings = config.get("bitstrings", [])
-        
-    coeff_map = list_to_coeff_map(bitstrings, n)
-    if len(coeff_map)<5000:
+        bitstrings = config.get("bitstrings", [])    
+    if len(bitstrings)<5000:
         start = time.perf_counter()
-        depth, qubits, circ = get_qualtran_circuit_depth(coeff_map, n, mu=3)
+        depth, qubits, circ = get_qualtran_sparse_stats(n,bitstrings, mu=3)
         end = time.perf_counter()
         qualtran_time = end-start
         all_gates = circ.size()
@@ -178,21 +164,17 @@ def run_gleinig_sparse(n, config):
     if config["input_type"] == "regex" and config.get("regex_complement", False) and n>=12:
         print("Too large coefficient map for Sparse Gleinig, skipping...")
         return (np.nan, np.nan, np.nan, np.nan, np.nan, None)
-    
     if config["input_type"]=="regex":
         ancilla_dim = config.get("ancilla_dim", 2)
         approx_dicke_list_length = n**(ancilla_dim/2)
-
     #This block ensures that we do not run out of memory by calculating the Gleinig list strings unnecessairly
     if config["input_type"]=="regex" and approx_dicke_list_length>10**6:
         print("Too large coefficient map for Sparse Gleinig, skipping...")
         return (np.nan, np.nan, np.nan, np.nan, np.nan, None)
-    
     if config["input_type"] != "bitstring_list":
         bitstrings = accepted_strings(regex_to_dfa(config.get("regex", None),complement=config.get("regex_complement", False)), n)
     else:
-        bitstrings = config.get("bitstrings", [])
-        
+        bitstrings = config.get("bitstrings", [])  
     if len(bitstrings)<10000:
         start = time.perf_counter()
         depth, qubits, circ = get_gleinig_sparse_stats(n, bitstrings)
@@ -246,7 +228,6 @@ def run_experiment(config):
         start_time = time.perf_counter()
         for method in methods:
             qubits, depth, two_gates, all_gates, run_time, circ = run_method(method, n, config)
-
             results[f"{method}_qubits"].append(qubits)
             results[f"{method}_depth"].append(depth)
             results[f"{method}_2gates"].append(two_gates)
@@ -286,29 +267,23 @@ def plot_results(config, results):
             if yscale == "log":
                 ax.set_yscale("log")
             ax.grid(True)
-
     fig.tight_layout()
     axes[0].legend(loc='upper left', fontsize='small', ncol=2, frameon=False)
     path = config.get("plot_output", "results_plot.pdf")
     plt.savefig(path, bbox_inches='tight')
     plt.show()
 
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True, help="Path to YAML config file")
     args = parser.parse_args()
-
     with open(args.config, "r") as f:
         config = yaml.safe_load(f)
-
     results = run_experiment(config)
-
     # Save the results to a pickle file
     output_dict_name  = "outputs/" + config.get("experiment", "results") + ".pkl"
     with open(output_dict_name, "wb") as f:
         pickle.dump(results, f)
-
     #Plot the results if needed
     if config["plotting"]:
         plot_results(config, results)

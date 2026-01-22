@@ -2,6 +2,13 @@ from pyformlang.regular_expression import Regex
 from pyformlang.finite_automaton import DeterministicFiniteAutomaton, State, Symbol
 import random
 
+def is_dfa(obj):
+    # Best: isinstance(obj, DFA)
+    return isinstance(obj, DeterministicFiniteAutomaton)
+
+def is_regex(obj):
+    return isinstance(obj, str)
+
 def regex_fmt(user_lst):
     # Format each string in the list
     formatted_strings = [''.join(f'({char})' for char in s) for s in user_lst]
@@ -213,45 +220,3 @@ def accepted_strings(dfa, system_size=None):
         accepted_strings = accepted_strings_cyclic_dfa(dfa, system_size)  # Use system size for cyclic DFA
     return accepted_strings
 
-def list_to_coeff_map(lst, n):
-    """Convert a list of strings to a coefficient map for a DFA."""
-    coeff_map = {}
-    for s in lst:
-        if len(s) != n:
-            raise ValueError(f"String '{s}' does not match the expected length {n}.")
-        int_s = int(s,2)
-        coeff_map[int_s] = 1  # Assign coefficient 1 to each string
-    return coeff_map
-
-if __name__ == "__main__":
-
-    bitstring_length = 5    
-    num_strings = 10
-    bitstrings = [''.join(random.choice("01") for _ in range(bitstring_length)) for _ in range(num_strings)]
-    # bitstrings = ["001","010","100"]
-    dfa_regex = list_to_acdfa(bitstrings)
-    dfa_direct = list_to_acdfa_direct(bitstrings)
-    dfa_to_use = dfa_direct
-
-    # Print DFA information
-    print("Minimized DFA States:", dfa_to_use.states)
-    print("Minimized DFA States len: ", len(dfa_to_use.states))
-    print("Minimized DFA Start State:", dfa_to_use.start_state)
-    print("Minimized DFA Accept States:", dfa_to_use.final_states)
-    print("Minimized DFA Transitions:", dfa_to_use.to_dict())
-
-    # Print transitions
-    print("\nMinimized DFA Transitions:")
-    for state, transitions in dfa_to_use.to_dict().items():
-        for symbol, next_state in transitions.items():
-            print(f"({state}) --[{symbol}]--> ({next_state})")
-
-    # Test some strings
-    test_strings = ["010", "000100", "0100", "01011", "1000", "00001"]
-    for s in test_strings:
-        input_symbols = list(s)  # Convert string to list of symbols
-        result = dfa_to_use.accepts(input_symbols)
-        #result = dfa_to_use.accepts([s])
-        print(f"Minimized DFA accepts '{s}': {result}")
-
-    print("The two methods are equivalent", dfa_regex.is_equivalent_to(dfa_direct))

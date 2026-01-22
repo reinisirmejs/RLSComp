@@ -1,6 +1,7 @@
 import numpy as np
 from qiskit.circuit import QuantumCircuit
 from qiskit.circuit.library import UnitaryGate, Isometry
+from src.mps_utils import get_no_ancilla_unitaries_from_MPS, get_staircase_padded_mps, get_tree_decomposition, get_circuit_info_from_tree_rectangular
 
 """
 Functions to convert the isometries to unitary operators and then to quantum circuits.
@@ -33,7 +34,8 @@ Option 1: This function takes the unitaries directly from get_no_ancilla_unitari
 Here we directly exploit the MPS structure and carefully create unitary operators directly from the isometries
 """
 
-def MPS_to_circuit_SeqRLSP(unitaries):
+def MPS_to_circuit_SeqRLSP(MPS_LIST):
+    unitaries, _ = get_no_ancilla_unitaries_from_MPS(MPS_LIST)
     system_size = len(unitaries)
     big_ckt = QuantumCircuit(system_size)
     for i in range(system_size):
@@ -45,7 +47,8 @@ def MPS_to_circuit_SeqRLSP(unitaries):
         big_ckt.append(U_ckt, act_on_qubits)
     return big_ckt
 
-def MPS_to_circuit_SeqIsoRLSP(isometries):
+def MPS_to_circuit_SeqIsoRLSP(MPS_LIST):
+    isometries, _ = get_no_ancilla_unitaries_from_MPS(MPS_LIST,rectangular=True)
     system_size = len(isometries)
     big_ckt = QuantumCircuit(system_size)
     for i in range(system_size):
@@ -61,9 +64,13 @@ def MPS_to_circuit_SeqIsoRLSP(isometries):
 Option 2: This function prepares the tree method, which should have a log(N) depth
 """
 
-def Tree_to_circuit(system_size, unitary_tuple_list_of_lists):
+def Tree_to_circuit(MPS_LIST):
+    system_size = len(MPS_LIST)
+    padded_mps = get_staircase_padded_mps(MPS_LIST)
+    tree = get_tree_decomposition(padded_mps)
+    circuit_layers = get_circuit_info_from_tree_rectangular(system_size,tree)
     big_ckt = QuantumCircuit(system_size)
-    for circuit_layer in unitary_tuple_list_of_lists:
+    for circuit_layer in circuit_layers:
         acted_on_qubits = []
         for unit_tuple in circuit_layer:
             isometry = unit_tuple['matrix']

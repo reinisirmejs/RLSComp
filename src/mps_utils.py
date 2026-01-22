@@ -42,8 +42,23 @@ def get_bond_dimension(begin_state, final_state, transitions):
             max_size = len(next_layer)
     return max_size
 
+def is_mps(obj):
+    # Typical MPS: list of rank-3 tensors
+    return (
+        isinstance(obj, list)
+        and len(obj) > 0
+        and hasattr(obj[0], "shape")
+    )
+
+def is_bitstring_list(obj):
+    return (
+        isinstance(obj, list)
+        and len(obj) > 0
+        and all(isinstance(b, str) for b in obj)
+    )
+
 """
-MPS functions to get the canonical form of the MPS and extract the isometries
+MPS builder functions from different inputs
 """
 
 def build_mps_from_regex(regex, n, complement=False):
@@ -51,6 +66,18 @@ def build_mps_from_regex(regex, n, complement=False):
     A, v_l, v_r = DFA_to_MPS(dfa)
     MPS_LIST = MPS_to_list(A, v_l, v_r, n)
     return MPS_LIST, dfa
+
+def build_mps_from_DFA(dfa):
+    A, v_l, v_r = DFA_to_MPS(dfa)
+    n = len(A)
+    MPS_LIST = MPS_to_list(A, v_l, v_r, n)
+    return MPS_LIST
+
+def build_mps_from_bitstrings(bitstring_list,complement=False):
+    acdfa = list_to_acdfa_direct(bitstring_list, complement=complement)
+    MPS_LIST = ACDFA_to_MPS(acdfa)
+    return MPS_LIST
+
 
 def build_dicke_mps_from_bitstrings(n, k):
     def bitstrings_with_k_ones(n, k):
@@ -67,6 +94,10 @@ def build_dicke_mps_from_bitstrings(n, k):
     acdfa = list_to_acdfa_direct(input_list)
     MPS_LIST = ACDFA_to_MPS(acdfa)
     return MPS_LIST, None
+
+"""
+MPS functions to get the canonical form of the MPS and extract the isometries
+"""
 
 def MPS_to_list(A, v_l, v_r, n):
     left = np.zeros((1,v_l.shape[0]))
@@ -123,7 +154,7 @@ def left_isometries(left_canonical_mps):
         isometries.append(left_canonical_mps[i][1,:,:])
     return isometries
 
-def get_padded_mps(MPS_LIST):
+def get_staircase_padded_mps(MPS_LIST):
     """Return an MPS with bond dimensions padded to powers of 2."""
     MPS_LIST = normalize(MPS_LIST)
     left_mps_list, _ = left_canonical_form_staircase(MPS_LIST)

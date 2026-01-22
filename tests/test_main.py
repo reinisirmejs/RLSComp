@@ -4,7 +4,7 @@ import numpy as np
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils_for_testing import verify_state, dictionary_from_state
 from src.regex_utils import accepted_strings, list_to_acdfa_direct
-from src.mps_utils import MPS_to_state, ACDFA_to_MPS, get_tree_decomposition, get_state_from_tree, get_no_ancilla_unitaries_from_MPS, get_padded_mps, get_circuit_info_from_tree_rectangular, build_mps_from_regex, build_dicke_mps_from_bitstrings
+from src.mps_utils import MPS_to_state, ACDFA_to_MPS, get_tree_decomposition, get_state_from_tree, build_mps_from_regex, build_dicke_mps_from_bitstrings
 from src.circuit_utils import MPS_to_circuit_SeqRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
 
 # ============================================================================================
@@ -76,7 +76,7 @@ def test_multiple_of_3_approach():
 # ============================================================================================    
 
 def test_bartschi_2019():
-    from src.dicke_states_bartschi2019 import dicke_state, test_circuit_qasm
+    from src.bartschi2019_dicke import dicke_state, test_circuit_qasm
     dicke_circ = dicke_state(6,2)
     counts = test_circuit_qasm(dicke_circ)
     assert len(counts)==15
@@ -89,6 +89,34 @@ def test_bartschi_2019():
         assert k.count('1') == 3
 
 # ============================================================================================
+# Tests for Gleinig sparse state preparation
+# ============================================================================================   
+
+def test_gleinig_sparse():
+    from src.benchmarking_utils import get_gleinig_sparse_stats
+    n=6
+    bitstring_list = ["100110", "000010", "001011", "111111", "000001", "111000"]
+    acdfa = list_to_acdfa_direct(bitstring_list)
+    MPS_LIST = ACDFA_to_MPS(acdfa)
+    target_state = MPS_to_state(MPS_LIST)
+    depth, qubits, circ = get_gleinig_sparse_stats(n, bitstring_list)
+    assert verify_state(target_state, circ)
+
+# ============================================================================================
+# Tests for Qualtran sparse state preparation
+# ============================================================================================  
+
+# def test_qualtran_sparse():
+#     from src.benchmarking_utils import get_qualtran_sparse_stats
+#     n=3
+#     bitstring_list = ["100", "000", "011"]
+#     # acdfa = list_to_acdfa_direct(bitstring_list)
+#     # MPS_LIST = ACDFA_to_MPS(acdfa)
+#     # target_state = MPS_to_state(MPS_LIST)
+#     depth, qubits, circ = get_qualtran_sparse_stats(n, bitstring_list,mu=3)
+#     assert True
+
+# ============================================================================================
 # Tests for SeqIsoRLSP and SeqRLSP
 # ============================================================================================
 
@@ -97,8 +125,8 @@ def test_SeqRLSP_W():
     n = 10
     MPS_LIST, dfa = build_mps_from_regex(regex, n)
     target_state = MPS_to_state(MPS_LIST)
-    unitaries, ancilla_state = get_no_ancilla_unitaries_from_MPS(MPS_LIST)
-    circ = MPS_to_circuit_SeqRLSP(unitaries)
+    #unitaries, ancilla_state = get_no_ancilla_unitaries_from_MPS(MPS_LIST)
+    circ = MPS_to_circuit_SeqRLSP(MPS_LIST)
     assert verify_state(target_state, circ)
 
 def test_SeqRLSP_dicke():
@@ -106,8 +134,8 @@ def test_SeqRLSP_dicke():
     n = 8
     MPS_LIST, dfa = build_mps_from_regex(regex, n)
     target_state = MPS_to_state(MPS_LIST)
-    unitaries, ancilla_state = get_no_ancilla_unitaries_from_MPS(MPS_LIST)
-    circ = MPS_to_circuit_SeqRLSP(unitaries)
+    #unitaries, ancilla_state = get_no_ancilla_unitaries_from_MPS(MPS_LIST)
+    circ = MPS_to_circuit_SeqRLSP(MPS_LIST)
     assert verify_state(target_state, circ)
 
 def test_SeqIsoRLSP_dicke():
@@ -117,8 +145,7 @@ def test_SeqIsoRLSP_dicke():
     n = 8
     MPS_LIST, dfa = build_mps_from_regex(regex, n)
     target_state = MPS_to_state(MPS_LIST)
-    unitaries, ancilla_state = get_no_ancilla_unitaries_from_MPS(MPS_LIST,rectangular=True)
-    circ = MPS_to_circuit_SeqIsoRLSP(unitaries)
+    circ = MPS_to_circuit_SeqIsoRLSP(MPS_LIST)
     assert verify_state(target_state, circ)
 
 def test_SeqIsoRLSP_product():
@@ -126,8 +153,7 @@ def test_SeqIsoRLSP_product():
     acdfa = list_to_acdfa_direct(bitstring_list)
     MPS_LIST = ACDFA_to_MPS(acdfa)
     target_state = MPS_to_state(MPS_LIST)
-    unitaries, ancilla_state = get_no_ancilla_unitaries_from_MPS(MPS_LIST,rectangular=True)
-    circ = MPS_to_circuit_SeqIsoRLSP(unitaries)
+    circ = MPS_to_circuit_SeqIsoRLSP(MPS_LIST)
     assert verify_state(target_state, circ)
 
 def test_SeqIsoRLSP_arbitrary():
@@ -135,8 +161,7 @@ def test_SeqIsoRLSP_arbitrary():
     acdfa = list_to_acdfa_direct(bitstring_list)
     MPS_LIST = ACDFA_to_MPS(acdfa)
     target_state = MPS_to_state(MPS_LIST)
-    unitaries, ancilla_state = get_no_ancilla_unitaries_from_MPS(MPS_LIST,rectangular=True)
-    circ = MPS_to_circuit_SeqIsoRLSP(unitaries)
+    circ = MPS_to_circuit_SeqIsoRLSP(MPS_LIST)
     assert verify_state(target_state, circ)
 
 # ============================================================================================
@@ -148,8 +173,7 @@ def test_correct_state_from_tree():
     n = 5 #Here system size 6 fails while 4,8 etc., ones that are multiples of 4 seem to work. 
     MPS_LIST, dfa = build_mps_from_regex(regex, n)
     state_from_regex = MPS_to_state(MPS_LIST)
-    mps = get_padded_mps(MPS_LIST)
-    tree = get_tree_decomposition(mps)
+    tree = get_tree_decomposition(MPS_LIST)
     state_from_tree = get_state_from_tree(tree)
     assert np.allclose(state_from_regex, state_from_tree, atol=1e-12)
 
@@ -158,11 +182,7 @@ def test_tree_circuit_dicke_2_rectangular():
     regex = "(0)*1(0)*1(0)*" 
     MPS_LIST, dfa = build_mps_from_regex(regex, n)
     target_state =  MPS_to_state(MPS_LIST)
-
-    padded_mps = get_padded_mps(MPS_LIST)
-    tree = get_tree_decomposition(padded_mps)
-    circuit_layers = get_circuit_info_from_tree_rectangular(n,tree)
-    circ = Tree_to_circuit(n, circuit_layers)
+    circ = Tree_to_circuit(MPS_LIST)
     assert verify_state(target_state, circ)
 
 def test_no_ancilla_arbitrary_rectangular():
@@ -171,11 +191,58 @@ def test_no_ancilla_arbitrary_rectangular():
     acdfa = list_to_acdfa_direct(bitstring_list)
     MPS_LIST = ACDFA_to_MPS(acdfa)
     target_state = MPS_to_state(MPS_LIST)
-    padded_mps = get_padded_mps(MPS_LIST)
-    tree = get_tree_decomposition(padded_mps)
-    circuit_layers = get_circuit_info_from_tree_rectangular(n,tree)
-    circ = Tree_to_circuit(n, circuit_layers)
+    circ = Tree_to_circuit(MPS_LIST)
     assert verify_state(target_state, circ)
 
+
+# ============================================================================================
+# Tests for the interface
+# ============================================================================================
+from src.interface import build_SeqRLSP_circuit
+
+def test_SeqRLSP_from_regex():
+    regex = "(0)*1(0)*1(0)*"
+    n = 7
+    MPS_LIST, _ = build_mps_from_regex(regex, n)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_SeqRLSP_circuit(
+        regex,n
+    )
+    assert verify_state(target_state, circ)
+
+def test_SeqRLSP_from_bitstrings():
+    from src.mps_utils import build_mps_from_bitstrings
+    bitstrings = [
+        "00101",
+        "01001",
+        "10001",
+    ]
+    MPS_LIST = build_mps_from_bitstrings(bitstrings)
+    target_state = MPS_to_state(MPS_LIST)
+
+    circ = build_SeqRLSP_circuit(bitstrings)
+    assert verify_state(target_state, circ)
+
+def test_SeqRLSP_from_dfa():
+    from src.mps_utils import build_mps_from_DFA
+    regex = "(0)*1(0)*1(0)*"
+    n = 6
+    _, dfa = build_mps_from_regex(regex, n)
+    MPS_LIST = build_mps_from_DFA(dfa)
+    target_state = MPS_to_state(MPS_LIST)
+
+    circ = build_SeqRLSP_circuit(dfa)
+    assert verify_state(target_state, circ)
+
+def test_SeqRLSP_from_mps():
+    regex = "(0)*1(0)*"
+    n = 5
+
+    MPS_LIST, _ = build_mps_from_regex(regex, n)
+    target_state = MPS_to_state(MPS_LIST)
+
+    circ = build_SeqRLSP_circuit(MPS_LIST)
+
+    assert verify_state(target_state, circ)
 
 

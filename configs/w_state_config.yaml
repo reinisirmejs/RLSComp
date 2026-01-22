@@ -6,7 +6,7 @@ regex: "(0)*1(0)*"
 regex_complement: False  # If True, matches all bitstrings that do not match the regex
 
 system_sizes: [4,6,8,10,12,14,16,20,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80,84,88,92,96, 100]  # System sizes to benchmark
-methods: [SeqRLSP, TreeRLSP]#, qiskit, qualtran, gleinig_sparse,bartschi2019_dicke]   # Options: "ours", "ours_efficient", "qiskit", "qualtran", "ours_rectangular"         
+methods: [SeqRLSP, TreeRLSP, qualtran]#, qiskit, qualtran, gleinig_sparse,bartschi2019_dicke]   # Options: "ours", "ours_efficient", "qiskit", "qualtran", "ours_rectangular"         
 ancilla_dim: 2             # Dimension of the ancilla register
 
 plotting: True
