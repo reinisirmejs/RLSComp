@@ -1,8 +1,8 @@
 import numpy as np
-from qiskit import QuantumCircuit, QuantumRegister
+from qiskit import QuantumCircuit
 from qiskit.quantum_info import Statevector,Operator
 from qiskit.circuit import Gate
-from typing import Set, Dict, Tuple, List
+from typing import Set, Dict, Tuple
 import copy
 from itertools import combinations
 import time

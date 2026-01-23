@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy
 
 # main classes and functions
 from qiskit import QuantumCircuit, transpile
@@ -8,9 +7,6 @@ from qiskit_aer import Aer, AerSimulator
 
 # gates
 from qiskit.circuit.library import RYGate
-
-# visualization stuff
-from qiskit.visualization import plot_histogram
 
 ##################################################################
 ##################################################################

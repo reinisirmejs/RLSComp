@@ -1,0 +1,4 @@
+numpy>=1.23
+pyformlang>=1.0
+tensornetwork>=0.4
+qiskit>=2.0.0

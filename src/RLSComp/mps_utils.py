@@ -2,8 +2,8 @@ import numpy as np
 import itertools
 from tensornetwork import ncon
 from numpy import linalg as LA
-from src.padding_functions import padding_isometries_list_no_ancilla, padding_isometries_list_to_powers_of_2
-from src.regex_utils import regex_to_dfa, list_to_acdfa_direct
+from .padding_functions import padding_isometries_list_no_ancilla, padding_isometries_list_to_powers_of_2
+from .regex_utils import regex_to_dfa, list_to_acdfa_direct
 
 """"
 Basic MPS functions

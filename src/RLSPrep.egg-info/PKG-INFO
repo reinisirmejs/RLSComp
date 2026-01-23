@@ -1,0 +1,47 @@
+Metadata-Version: 2.4
+Name: RLSPrep
+Version: 0.1.0
+Summary: SeqRLSP circuit construction from MPS, DFA, and regex inputs
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: numpy
+Requires-Dist: scipy
+
+# RLS Preparation project from Hackathon 2025
+
+The project allows to specify the state using regex formalism or as a list of bit strings and generates a quantum circuit to prepare the respective equal superposition of bit string states.
+
+## Benchmarking
+
+To benchmark the code we now use the following framework. To illustrate it,  we showcase it for the W-state benchmarking. To run the experiment we first create a configuration file, e.g. `w_state_config.yaml`. This file contains all the information about the experiment we want to run as follows:
+We first specify whether we will use regex or bit string formalism as input types, followed by the specific description of the states:
+```
+input_type: regex
+regex: "(0)*1(0)*"
+```
+or 
+```
+input_type: bitstring_list
+bitstring_list: ["0001", "0100", "0010", "0001"]
+system_sizes=[4]
+```
+while in the regex mode we can also specify a number of system sizes that we want to perform benchmarking for:
+```
+system_sizes: [4, 8, 12, 16 ,20, 24, 28, 32]
+```
+Lastly, to finish specifying the system, we need to provide the dimensionality of the ancillary Hilbert space, which equals the maximum bond dimension of the generated state, which is equal to two in the case of the W-state
+```
+ancilla_dim: 2
+```
+Lastly, we specify for which methods we want to benchmark the state preparation circuit in this case via
+```
+methods: [ours, qualtran, qiskit]
+```
+and note whether we want to plot our results.
+```
+plotting: True
+plot_output: figs/w_state_experiment_output.png
+```
+The resulting configuration of the regex case mentioned here leads to the following plot:
+
+![image](figs/w_state_experiment_output.png)

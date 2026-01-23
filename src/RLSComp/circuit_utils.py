@@ -1,7 +1,7 @@
 import numpy as np
 from qiskit.circuit import QuantumCircuit
 from qiskit.circuit.library import UnitaryGate, Isometry
-from src.mps_utils import get_no_ancilla_unitaries_from_MPS, get_staircase_padded_mps, get_tree_decomposition, get_circuit_info_from_tree_rectangular
+from .mps_utils import get_no_ancilla_unitaries_from_MPS, get_staircase_padded_mps, get_tree_decomposition, get_circuit_info_from_tree_rectangular
 
 """
 Functions to convert the isometries to unitary operators and then to quantum circuits.

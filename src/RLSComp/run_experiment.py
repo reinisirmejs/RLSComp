@@ -1,16 +1,18 @@
 import argparse
 import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import yaml
 import pickle
 import numpy as np
 import time
 import matplotlib.pyplot as plt
-plt.style.use('misc/plot_style.mplstyle')
+#plt.style.use('misc/plot_style.mplstyle')
 
-from src.regex_utils import regex_to_dfa, list_to_acdfa_direct, accepted_strings
-from src.mps_utils import DFA_to_MPS, MPS_to_list, MPS_to_state, ACDFA_to_MPS
-from src.circuit_utils import  MPS_to_circuit_SeqRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
-from src.benchmarking_utils import get_our_cost_from_circ, get_qiskit_stats, get_bartschi2019_stats, get_gleinig_sparse_stats, get_qualtran_sparse_stats
+from .regex_utils import regex_to_dfa, list_to_acdfa_direct, accepted_strings
+from .mps_utils import DFA_to_MPS, MPS_to_list, MPS_to_state, ACDFA_to_MPS
+from .circuit_utils import  MPS_to_circuit_SeqRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
+from .benchmarking_utils import get_our_cost_from_circ, get_qiskit_stats, get_bartschi2019_stats, get_gleinig_sparse_stats, get_qualtran_sparse_stats
 
 
 def build_mps(input_type, regex, bitstrings, system_size,complement=False):

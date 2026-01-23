@@ -1,6 +1,6 @@
-from src.mps_utils import build_mps_from_DFA, build_mps_from_regex, build_mps_from_bitstrings, is_mps, is_bitstring_list
-from src.circuit_utils import MPS_to_circuit_SeqRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
-from src.regex_utils import is_dfa, is_regex
+from .mps_utils import build_mps_from_DFA, build_mps_from_regex, build_mps_from_bitstrings, is_mps, is_bitstring_list
+from .circuit_utils import MPS_to_circuit_SeqRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
+from .regex_utils import is_dfa, is_regex
 
 def build_SeqRLSP_circuit(input_obj, system_size=None, *, complement=False, use_isometries=False):
     """

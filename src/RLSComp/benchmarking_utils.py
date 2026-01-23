@@ -1,7 +1,7 @@
 import numpy as np
 
-from src.regex_utils import *
-from src.mps_utils import *
+from .regex_utils import *
+from .mps_utils import *
 
 # Import Qiskit libraries for quantum circuit creation and manipulation
 from qiskit import qasm2, qasm3, QuantumCircuit, transpile
@@ -16,9 +16,9 @@ import cirq
 from cirq import qasm
 from cirq.contrib.qasm_import import circuit_from_qasm
 
-from src.bartschi2019_dicke import dicke_state
-from src.gleinig_sparse import sparse_gleinig, build_coeffs
-from src.qualtran_sparse import get_qualtran_circuit_depth, list_to_coeff_map
+from .bartschi2019_dicke import dicke_state
+from .gleinig_sparse import sparse_gleinig, build_coeffs
+from .qualtran_sparse import get_qualtran_circuit_depth, list_to_coeff_map
 
 
 def get_qiskit_stats(amplitudes, num_qubits):

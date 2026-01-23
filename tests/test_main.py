@@ -2,9 +2,11 @@ import sys
 import os
 import numpy as np
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.regex_utils import accepted_strings, list_to_acdfa_direct
-from src.mps_utils import MPS_to_state, ACDFA_to_MPS, get_tree_decomposition, get_state_from_tree, build_mps_from_regex, build_dicke_mps_from_bitstrings
-from src.circuit_utils import MPS_to_circuit_SeqRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
+from RLSComp.regex_utils import accepted_strings, list_to_acdfa_direct
+from RLSComp.mps_utils import MPS_to_state, ACDFA_to_MPS, get_tree_decomposition, get_state_from_tree, build_mps_from_regex, build_mps_from_DFA, build_dicke_mps_from_bitstrings, build_mps_from_bitstrings
+from RLSComp.circuit_utils import MPS_to_circuit_SeqRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
+from RLSComp.benchmarking_utils import get_gleinig_sparse_stats
+from RLSComp.interface import build_SeqRLSP_circuit
 from qiskit.quantum_info import Statevector
 
 """
@@ -101,7 +103,7 @@ def test_multiple_of_3_approach():
 # ============================================================================================    
 
 def test_bartschi_2019():
-    from src.bartschi2019_dicke import dicke_state, test_circuit_qasm
+    from RLSComp.bartschi2019_dicke import dicke_state, test_circuit_qasm
     dicke_circ = dicke_state(6,2)
     counts = test_circuit_qasm(dicke_circ)
     assert len(counts)==15
@@ -118,7 +120,6 @@ def test_bartschi_2019():
 # ============================================================================================   
 
 def test_gleinig_sparse():
-    from src.benchmarking_utils import get_gleinig_sparse_stats
     n=6
     bitstring_list = ["100110", "000010", "001011", "111111", "000001", "111000"]
     acdfa = list_to_acdfa_direct(bitstring_list)
@@ -164,8 +165,6 @@ def test_SeqRLSP_dicke():
     assert verify_state(target_state, circ)
 
 def test_SeqIsoRLSP_dicke():
-    from src.mps_utils import get_no_ancilla_unitaries_from_MPS
-    from src.circuit_utils import MPS_to_circuit_SeqIsoRLSP
     regex = "(0)*1(0)*1(0)*1(0)*"
     n = 8
     MPS_LIST, dfa = build_mps_from_regex(regex, n)
@@ -223,7 +222,6 @@ def test_no_ancilla_arbitrary_rectangular():
 # ============================================================================================
 # Tests for the interface
 # ============================================================================================
-from src.interface import build_SeqRLSP_circuit
 
 def test_SeqRLSP_from_regex():
     regex = "(0)*1(0)*1(0)*"
@@ -236,7 +234,6 @@ def test_SeqRLSP_from_regex():
     assert verify_state(target_state, circ)
 
 def test_SeqRLSP_from_bitstrings():
-    from src.mps_utils import build_mps_from_bitstrings
     bitstrings = [
         "00101",
         "01001",
@@ -249,7 +246,6 @@ def test_SeqRLSP_from_bitstrings():
     assert verify_state(target_state, circ)
 
 def test_SeqRLSP_from_dfa():
-    from src.mps_utils import build_mps_from_DFA
     regex = "(0)*1(0)*1(0)*"
     n = 6
     _, dfa = build_mps_from_regex(regex, n)
