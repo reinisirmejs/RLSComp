@@ -20,11 +20,8 @@ It provides both **core functionality** for general use and **full reproducibili
 
 If you only need the main functions (e.g., `build_SeqRLSP_circuit` and `build_TreeRLSP_circuit`), you can install directly from GitHub:
 
-```bash
-pip install git+https://github.com/reinisirmejs/RLSComp.git
+`pip install git+https://github.com/reinisirmejs/RLSComp.git`
 
-
-```markdown
 # RLSComp
 
 RLSComp is a Python package for compiling quantum circuits for Regular Language States. It provides both core functionality for general use and full reproducibility for research experiments, including test suites.
@@ -46,7 +43,7 @@ Install directly from the GitHub repository using pip: `pip install git+https://
 
 ### Full functionality and reproducibility
 
-Clone the repository and install in a virtual environment using the repository requirements, then install the package in editable mode. (See `requirements.txt` and the repository root for the recommended workflow.)
+Clone the repository and install in a virtual environment using the repository requirements, then install the package in editable mode. (See `misc/requirements.txt` and the repository root for the recommended workflow.)
 
 ## Using the Core Functions
 
@@ -58,35 +55,38 @@ Use the circuit builders directly:
 
 ### Regex or system size
 
-`regex = "0*(10*)*"`  
-`num_qubits = 5`  
-`circuit = build_SeqRLSP_circuit(regex=regex, num_qubits=num_qubits)`  
-`print(circuit)`
+```
+regex = "0*(10*)*" 
+num_qubits = 5 
+circuit = build_SeqRLSP_circuit(regex, num_qubits) 
+print(circuit)
+```
 
 ### Bitstring list
 
-`bitstring_list = ["000", "010", "111"]`  
-`circuit = build_SeqRLSP_circuit(bitstring_list=bitstring_list)`  
-`print(circuit)`
+```
+bitstring_list = ["000", "010", "111"] 
+circuit = build_SeqRLSP_circuit(bitstring_list) 
+print(circuit)
+```
 
 ### DFA
 
-`from RLSComp import DFA`  
-`dfa = DFA(num_states=3, alphabet=[0, 1])`  
-`dfa.add_transition(0, 1, 0)`  
-`dfa.add_transition(1, 2, 1)`  
-`dfa.set_accepting_states([2])`  
-`circuit = build_SeqRLSP_circuit(dfa=dfa)`  
-`print(circuit)`
+The DFA is given as a `` object
+
+```
+circuit = build_SeqRLSP_circuit(dfa) 
+print(circuit)
+```
 
 ### MPS
 
-`from RLSComp import MPS`  
-`import numpy as np`  
-`mps = MPS(num_qubits=3, bond_dim=2)`  
-`mps.random_initialize(seed=42)`  
-`circuit = build_SeqRLSP_circuit(mps=mps)`  
-`print(circuit)`
+The MPS is given as a object
+```
+circuit = build_SeqRLSP_circuit(MPS) 
+print(circuit)
+```
+
 
 ## Running Tests
 
