@@ -13,9 +13,9 @@ It provides both **core functionality** for general use and **full reproducibili
 
 ---
 
-## Installation
+# Installation
 
-### 1. Core functionality (pip install)
+## 1. Core functionality (pip install)
 
 If you only need the main functions (e.g., `build_SeqRLSP_circuit` and `build_TreeRLSP_circuit`), you can install directly from GitHub:
 
@@ -23,19 +23,18 @@ If you only need the main functions (e.g., `build_SeqRLSP_circuit` and `build_Tr
 pip install git+https://github.com/reinisirmejs/RLSComp.git
 ```
 
-
 ### Using the Core Functions
-
-### Import
 
 Use the circuit builders directly:
 
 `from RLSComp import build_SeqRLSP_circuit, build_TreeRLSP_circuit`
 
+which both admit the following possible inputs:
+
 #### Regex or system size
 
 ```
-regex = "0*(10*)*" 
+regex = "0*10*" 
 num_qubits = 5 
 circuit = build_SeqRLSP_circuit(regex, num_qubits)
 ```
@@ -62,41 +61,45 @@ The MPS is given as a object
 circuit = build_SeqRLSP_circuit(MPS) 
 ```
 
-## Full functionality and reproducibility
+## 2. Full functionality and reproducibility
 
-Clone the repository and install in a virtual environment using the repository requirements, then install the package in editable mode. (See `misc/requirements.txt` and the repository root for the recommended workflow.)
+Clone the repository and install the dependences from `misc/requirements.txt`.
 
+#### Running Tests
 
-## Running Tests
+Run the tests to verify the correct installation
 
-Run the test suite with pytest using the repository setup. Optional coverage can be enabled via pytest coverage flags.
+```
+pytest tests/ 
+```
 
-## Example Workflow
+### Running experiments
 
-`from RLSComp import build_SeqRLSP_circuit`  
-`circuit = build_SeqRLSP_circuit(regex="0*(10*)*", num_qubits=5)`  
-`result = simulate(circuit)  # example function`  
-`print(result)`
+We can run an experiment that compares the resources for different methods using the `run_experiment.py`. We include an example config for benchmarking the **W-state** preparation.
 
-## Project Structure
+```
+python src/RLSComp/run_experiment.py --config=configs/w_state_config.yaml
+```
 
-- `RLSComp/` - package source
-- `tests/` - test suite
-- `requirements.txt` - development and reproducibility dependencies
-- `setup.py` or `pyproject.toml` - packaging configuration
-- `README.md` - project documentation
+Any experiment can be run by creating an arbitrary config  `my_experiment.yaml` file:
 
-## Contributing
+```
+experiment: my_experiment
 
-1. Clone the repository.
-2. Create a virtual environment.
-3. Install dependencies from `requirements.txt`.
-4. Install the package in editable mode.
-5. Run the test suite and ensure it passes.
+input_type: regex          # Options: "regex" or "bitstring_list"
+# If using regex
+regex: "(0)*1(0)*"
+regex_complement: False  # If True, prepares all bitstrings that do not match the regex
 
-## License
+# If using input_type: bitstring_list
+# Provide bitstring_list = ["0001", "0010", "1000"]
 
-Include your license here.
+system_sizes: [4]  # System sizes to benchmark. For input_type: regex it is possible to provide multiple
+methods: [SeqRLSP, TreeRLSP, qualtran, qiskit, gleinig_sparse, bartschi2019_dicke]
+# These are all available methods. Note that some methods might not be suitable for some inputs/large system sizes     
+
+plotting: True
+plot_output: figs/my_experiment_plot.pdf
 ```
 
 
