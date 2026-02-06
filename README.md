@@ -1,7 +1,7 @@
 # RLSComp
 
 **RLSComp** is a Python package for compiling quantum circuits for Regular Language States  
-It provides both **core functionality** for general use and **full reproducibility** for research experiments, including test suites. The package is based on preprint:arxiv.org/abs/2601.xxxxx
+It provides both **core functionality** for general use and **full reproducibility** for research experiments, including test suites. The package is based on [preprint:arxiv/2602.02698](https://arxiv.org/abs/2602.02698).
 
 ---
 
@@ -56,10 +56,12 @@ circuit = build_SeqRLSP_circuit(dfa)
 
 #### MPS
 
-The MPS is given as a object
 ```
 circuit = build_SeqRLSP_circuit(MPS) 
 ```
+where the MPS is defined as:
+
+
 
 ## 2. Full functionality and reproducibility
 
