@@ -59,7 +59,10 @@ circuit = build_SeqRLSP_circuit(dfa)
 ```
 circuit = build_SeqRLSP_circuit(MPS) 
 ```
-where the MPS is defined as:
+where the MPS over a sequence of symbols $x_1, x_2, \dots, x_N \in \Sigma$ is represented as a `List` of rank-3 tensors $\{A^[1], A^[2], \dots , A^[N]\}$. Each local tensor is stored as a `numpy.ndarray` and indexed as $A[x,i,j]$, where
+- $x$ is the physical index corresponding to the input symbol,
+- $i$ is the left virtual (bond) index,
+- $j$ is the right virtual (bond) index.
 
 
 
