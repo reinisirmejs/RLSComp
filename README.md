@@ -3,7 +3,11 @@
 **RLSComp** is a Python package for compiling quantum circuits for Regular Language States  
 It provides both **core functionality** for general use and **full reproducibility** for research experiments, including test suites. The package is based on [preprint:arxiv/2602.02698](https://arxiv.org/abs/2602.02698).
 
-[Features](#features) - [Installation](#installation) - [Cite Us](#citation)
+<p align="center">
+  <a href="#features">Features</a> -
+  <a href="#installation">Installation</a> -
+  <a href="#citation">Cite Us</a>
+</p>
 
 ---
 
@@ -112,6 +116,8 @@ plot_output: figs/my_experiment_plot.pdf
 ## Citation
 
 If you use this code, please cite this paper using the following bibtex entry:
+
+```
 @misc{RLSComp,
       title={Compiling Quantum Regular Language States},
       author={Armando Bellante and Reinis Irmejs and Marta Florido-Llinàs and María Cea Fernández and Marianna Crupi and Matthew Kiser and J. Ignacio Cirac},
@@ -121,6 +127,7 @@ If you use this code, please cite this paper using the following bibtex entry:
       primaryClass={quant-ph},
       url={https://arxiv.org/abs/2602.02698},
 }
+```
 
 
 
