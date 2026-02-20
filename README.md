@@ -40,7 +40,7 @@ which both admit the following possible inputs:
 #### Regex or system size
 
 ```
-regex = "0*10*" 
+regex = "(0)*1(0)*" 
 num_qubits = 5 
 circuit = build_SeqRLSP_circuit(regex, num_qubits)
 ```
