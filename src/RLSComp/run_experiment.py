@@ -13,6 +13,7 @@ from .regex_utils import regex_to_dfa, list_to_acdfa_direct, accepted_strings
 from .mps_utils import DFA_to_MPS, MPS_to_list, MPS_to_state, ACDFA_to_MPS
 from .circuit_utils import  MPS_to_circuit_SeqRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
 from .benchmarking_utils import get_our_cost_from_circ, get_qiskit_stats, get_bartschi2019_stats, get_gleinig_sparse_stats, get_qualtran_sparse_stats
+from .motzkin_utils import get_motzkin_strings, motzkinDFA, even_motzkin_count
 
 
 def build_mps(input_type, regex, bitstrings, system_size,complement=False):
@@ -23,6 +24,10 @@ def build_mps(input_type, regex, bitstrings, system_size,complement=False):
     elif input_type == "bitstring_list":
         acdfa = list_to_acdfa_direct(bitstrings, complement=complement)
         return ACDFA_to_MPS(acdfa)
+    elif input_type == "motzkin":
+        dfa = motzkinDFA(system_size)
+        A, v_l, v_r = DFA_to_MPS(dfa)
+        return MPS_to_list(A, v_l, v_r, system_size)
     else:
         raise ValueError(f"Unsupported input_type: {input_type}")
 
@@ -114,10 +119,21 @@ def run_qualtran(n,config):
     if config["input_type"]=="regex" and approx_dicke_list_length>10**6:
         print("Too large coefficient map for Qualtran, skipping...")
         return (np.nan, np.nan, np.nan, np.nan, np.nan, None)
-    if config["input_type"] != "bitstring_list":
+
+    if config["input_type"] == "regex":
         bitstrings = accepted_strings(regex_to_dfa(config.get("regex", None),complement=config.get("regex_complement", False)), n)
+    elif config["input_type"] == "motzkin":
+        if even_motzkin_count(n)>5000:
+            print("Too large coefficient map for Qualtran, skipping...")
+            return (np.nan, np.nan, np.nan, np.nan, np.nan, None)
+        bitstrings = get_motzkin_strings(n)
     else:
-        bitstrings = config.get("bitstrings", [])    
+        bitstrings = config.get("bitstrings", [])
+
+    # if config["input_type"] != "bitstring_list":
+    #     bitstrings = accepted_strings(regex_to_dfa(config.get("regex", None),complement=config.get("regex_complement", False)), n)
+    # else:
+    #     bitstrings = config.get("bitstrings", [])    
     if len(bitstrings)<5000:
         start = time.perf_counter()
         depth, qubits, circ = get_qualtran_sparse_stats(n,bitstrings, mu=3)
@@ -173,10 +189,17 @@ def run_gleinig_sparse(n, config):
     if config["input_type"]=="regex" and approx_dicke_list_length>10**6:
         print("Too large coefficient map for Sparse Gleinig, skipping...")
         return (np.nan, np.nan, np.nan, np.nan, np.nan, None)
-    if config["input_type"] != "bitstring_list":
+    
+    if config["input_type"] == "regex":
         bitstrings = accepted_strings(regex_to_dfa(config.get("regex", None),complement=config.get("regex_complement", False)), n)
+    elif config["input_type"] == "motzkin":
+        if even_motzkin_count(n)>10000:
+            print("Too large coefficient map for Sparse Gleinig, skipping...")
+            return (np.nan, np.nan, np.nan, np.nan, np.nan, None)
+        bitstrings = get_motzkin_strings(n)
     else:
-        bitstrings = config.get("bitstrings", [])  
+        bitstrings = config.get("bitstrings", [])
+
     if len(bitstrings)<10000:
         start = time.perf_counter()
         depth, qubits, circ = get_gleinig_sparse_stats(n, bitstrings)

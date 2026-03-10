@@ -42,6 +42,7 @@ def MPS_to_circuit_SeqRLSP(MPS_LIST):
         unitary = unitaries[i]
         shape = np.shape(unitary)
         nqubits = int(np.log2(shape[0]))
+        #print(unitary)
         U_ckt = unitary_matrix_to_circuit(unitary)
         act_on_qubits = list(range(i, i+nqubits))
         big_ckt.append(U_ckt, act_on_qubits)
@@ -51,6 +52,7 @@ def MPS_to_circuit_SeqIsoRLSP(MPS_LIST):
     isometries, _ = get_no_ancilla_unitaries_from_MPS(MPS_LIST,rectangular=True)
     system_size = len(isometries)
     big_ckt = QuantumCircuit(system_size)
+    #print("Padded isometries: ", isometries)
     for i in range(system_size):
         isometry = isometries[i]
         shape = np.shape(isometry)

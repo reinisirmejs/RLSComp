@@ -67,10 +67,14 @@ def build_mps_from_regex(regex, n, complement=False):
     MPS_LIST = MPS_to_list(A, v_l, v_r, n)
     return MPS_LIST, dfa
 
-def build_mps_from_DFA(dfa):
-    A, v_l, v_r = DFA_to_MPS(dfa)
-    n = len(A)
-    MPS_LIST = MPS_to_list(A, v_l, v_r, n)
+def build_mps_from_DFA(dfa,system_size=None):
+    if dfa.is_acyclic():  
+        MPS_LIST = ACDFA_to_MPS(dfa)
+    else:
+        if system_size==None:
+            raise(ValueError("Must provide N"))
+        A, v_l, v_r = DFA_to_MPS(dfa)
+        MPS_LIST = MPS_to_list(A, v_l, v_r, system_size)
     return MPS_LIST
 
 def build_mps_from_bitstrings(bitstring_list,complement=False):
@@ -329,6 +333,7 @@ we directly exploit the MPS structure and carefully create unitary operators dir
 
 def get_no_ancilla_unitaries_from_MPS(MPS_LIST,rectangular = False):
     left_mps_list, _ = left_canonical_form_staircase(MPS_LIST)
+    #print ("Left canonical staircase MPS: ", left_mps_list)
     isometries = left_isometries(left_mps_list)
     # Here we do the padding to ensure that the isometries are of the correct size
     unitaries = padding_isometries_list_no_ancilla(isometries,rectangular=rectangular)

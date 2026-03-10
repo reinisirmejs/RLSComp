@@ -48,12 +48,18 @@ def build_SeqRLSP_circuit(input_obj, system_size=None, *, complement=False, use_
     # DFA
     # --------------------------------------------------
     elif is_dfa(input_obj):
-        if system_size is not None:
-            raise ValueError(
-                "system_size must not be provided for DFA input"
-            )
-
-        MPS_LIST = build_mps_from_DFA(input_obj)
+        if input_obj.is_acyclic():
+            if system_size is not None:
+                raise ValueError(
+                    "system_size must not be provided for Acyclic DFA input"
+                )
+        else:
+            if system_size is None:
+                raise ValueError(
+                    "system_size must be provided for a DFA input with cycles"
+                )
+        
+        MPS_LIST = build_mps_from_DFA(input_obj,system_size=system_size)
 
     # --------------------------------------------------
     # MPS
@@ -70,6 +76,8 @@ def build_SeqRLSP_circuit(input_obj, system_size=None, *, complement=False, use_
         raise TypeError(
             f"Unsupported input type: {type(input_obj)}"
         )
+    
+    #print("Original MPS_LIST: ", MPS_LIST)
     if use_isometries:
         return MPS_to_circuit_SeqIsoRLSP(MPS_LIST)
     else:

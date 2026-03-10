@@ -19,6 +19,7 @@ def verify_state(target_state, circuit):
     dimSysAnc = len(statevector.data)
     dimSys = len(target_state)
     dimAnc = dimSysAnc//dimSys
+    print(dimSysAnc, dimSys, dimAnc)
     n_ancilla = int(np.ceil(np.log2(dimAnc)))
     # Assuming that the ancilla at the end decouples into the all 0 state,
     # The relevant system eigenvector is the every 2**n_ancilla element
@@ -249,10 +250,11 @@ def test_SeqRLSP_from_dfa():
     regex = "(0)*1(0)*1(0)*"
     n = 6
     _, dfa = build_mps_from_regex(regex, n)
-    MPS_LIST = build_mps_from_DFA(dfa)
+    #assert(dfa.is_acyclic())
+    MPS_LIST = build_mps_from_DFA(dfa,system_size=n)
     target_state = MPS_to_state(MPS_LIST)
 
-    circ = build_SeqRLSP_circuit(dfa)
+    circ = build_SeqRLSP_circuit(dfa,system_size=n)
     assert verify_state(target_state, circ)
 
 def test_SeqRLSP_from_mps():
@@ -267,3 +269,44 @@ def test_SeqRLSP_from_mps():
     assert verify_state(target_state, circ)
 
 
+
+# ============================================================================================
+# Tests for the Motzkin state preparation
+# ============================================================================================
+
+def test_motzkin_strings():
+    from RLSComp.motzkin_utils import get_motzkin_strings
+    n = 6
+    strings = get_motzkin_strings(n)
+    for s in strings:
+        height = 0
+        for c in s:
+            if c == '0':
+                height += 1
+            else:
+                height -= 1
+            assert height >= 0
+        assert height == 0
+
+
+def test_motzkin_state_preparation():
+    from RLSComp.motzkin_utils import motzkinDFA, get_motzkin_strings
+    from RLSComp.regex_utils import accepted_strings_cyclic_dfa
+    n = 4
+    dfa = motzkinDFA(n)
+    #assert(dfa.is_acyclic())
+    motzkin_strings_dfa = accepted_strings_cyclic_dfa(dfa, n)
+    print(motzkin_strings_dfa)
+    #print(dfa)
+    strings = get_motzkin_strings(n)
+    target_state = np.zeros(2**n)
+    for s in strings:
+        index = int(s, 2)
+        target_state[index] = 1/np.sqrt(len(strings))
+    
+    circ_strings = build_SeqRLSP_circuit(strings)
+    #verify_state(target_state, circ_strings)
+    assert verify_state(target_state, circ_strings)
+
+    circ_dfa = build_SeqRLSP_circuit(dfa, n)
+    assert verify_state(target_state, circ_dfa)
