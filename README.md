@@ -1,7 +1,13 @@
 # RLSComp
 
 **RLSComp** is a Python package for compiling quantum circuits for Regular Language States  
-It provides both **core functionality** for general use and **full reproducibility** for research experiments, including test suites. The package is based on preprint:arxiv.org/abs/2601.xxxxx
+It provides both **core functionality** for general use and **full reproducibility** for research experiments, including test suites. The package is based on [preprint:arxiv/2602.02698](https://arxiv.org/abs/2602.02698).
+
+<p align="center">
+  <a href="#features">Features</a> -
+  <a href="#installation">Installation</a> -
+  <a href="#citation">Cite Us</a>
+</p>
 
 ---
 
@@ -10,114 +16,117 @@ It provides both **core functionality** for general use and **full reproducibili
 - Compile quantum circuits for preparing Regular Language States using the Sequential (SeqRLSP) or Tree (TreeRLSP) approach.
 - Reproduce experimental scripts and tests (available via Git clone).
 - Lightweight core installation for ease of use.
-- Full functionality with development environment for testing and experiments.
 
 ---
 
-## Installation
+# Installation
 
-### 1. Core functionality (pip install)
+## 1. Core functionality (pip install)
 
 If you only need the main functions (e.g., `build_SeqRLSP_circuit` and `build_TreeRLSP_circuit`), you can install directly from GitHub:
 
-```bash
+```
 pip install git+https://github.com/reinisirmejs/RLSComp.git
+```
 
-
-```markdown
-# RLSComp
-
-RLSComp is a Python package for compiling quantum circuits for Regular Language States. It provides both core functionality for general use and full reproducibility for research experiments, including test suites.
-
-The package is based on the preprint: https://arxiv.org/abs/2601.xxxxx
-
-## Features
-
-- Compile quantum circuits for preparing Regular Language States using the Sequential (SeqRLSP) or Tree (TreeRLSP) approach.
-- Reproduce experimental scripts and tests (available via Git clone).
-- Lightweight core installation for ease of use.
-- Full functionality with a development environment for testing and experiments.
-
-## Installation
-
-### Core functionality
-
-Install directly from the GitHub repository using pip: `pip install git+https://github.com/reinisirmejs/RLSComp.git`
-
-### Full functionality and reproducibility
-
-Clone the repository and install in a virtual environment using the repository requirements, then install the package in editable mode. (See `requirements.txt` and the repository root for the recommended workflow.)
-
-## Using the Core Functions
-
-### Import
+### Using the Core Functions
 
 Use the circuit builders directly:
 
 `from RLSComp import build_SeqRLSP_circuit, build_TreeRLSP_circuit`
 
-### Regex or system size
+which both admit the following possible inputs:
 
-`regex = "0*(10*)*"`  
-`num_qubits = 5`  
-`circuit = build_SeqRLSP_circuit(regex=regex, num_qubits=num_qubits)`  
-`print(circuit)`
+#### Regex or system size
 
-### Bitstring list
+```
+regex = "(0)*1(0)*" 
+num_qubits = 5 
+circuit = build_SeqRLSP_circuit(regex, num_qubits)
+```
 
-`bitstring_list = ["000", "010", "111"]`  
-`circuit = build_SeqRLSP_circuit(bitstring_list=bitstring_list)`  
-`print(circuit)`
+#### Bitstring list
 
-### DFA
+```
+bitstring_list = ["000", "010", "111"] 
+circuit = build_SeqRLSP_circuit(bitstring_list) 
+```
 
-`from RLSComp import DFA`  
-`dfa = DFA(num_states=3, alphabet=[0, 1])`  
-`dfa.add_transition(0, 1, 0)`  
-`dfa.add_transition(1, 2, 1)`  
-`dfa.set_accepting_states([2])`  
-`circuit = build_SeqRLSP_circuit(dfa=dfa)`  
-`print(circuit)`
+#### DFA
 
-### MPS
+The DFA is given as a `pyformlang.finite_automaton.DeterministicFiniteAutomaton` object
 
-`from RLSComp import MPS`  
-`import numpy as np`  
-`mps = MPS(num_qubits=3, bond_dim=2)`  
-`mps.random_initialize(seed=42)`  
-`circuit = build_SeqRLSP_circuit(mps=mps)`  
-`print(circuit)`
+```
+circuit = build_SeqRLSP_circuit(dfa) 
+```
 
-## Running Tests
+#### MPS
 
-Run the test suite with pytest using the repository setup. Optional coverage can be enabled via pytest coverage flags.
+```
+circuit = build_SeqRLSP_circuit(MPS) 
+```
+where the MPS over a sequence of symbols $x_1, x_2, \dots, x_N \in \Sigma$ is represented as a `List` of rank-3 tensors $\{A^[1], A^[2], \dots , A^[N]\}$. Each local tensor is stored as a `numpy.ndarray` and indexed as $A[x,i,j]$, where
+- $x$ is the physical index corresponding to the input symbol,
+- $i$ is the left virtual (bond) index,
+- $j$ is the right virtual (bond) index.
 
-## Example Workflow
 
-`from RLSComp import build_SeqRLSP_circuit`  
-`circuit = build_SeqRLSP_circuit(regex="0*(10*)*", num_qubits=5)`  
-`result = simulate(circuit)  # example function`  
-`print(result)`
 
-## Project Structure
+## 2. Full functionality and reproducibility
 
-- `RLSComp/` - package source
-- `tests/` - test suite
-- `requirements.txt` - development and reproducibility dependencies
-- `setup.py` or `pyproject.toml` - packaging configuration
-- `README.md` - project documentation
+Clone the repository and install the dependences from `misc/requirements.txt`.
 
-## Contributing
+#### Running Tests
 
-1. Clone the repository.
-2. Create a virtual environment.
-3. Install dependencies from `requirements.txt`.
-4. Install the package in editable mode.
-5. Run the test suite and ensure it passes.
+Run the tests to verify the correct installation
 
-## License
+```
+pytest tests/ 
+```
 
-Include your license here.
+### Running experiments
+
+We can run an experiment that compares the resources for different methods using the `run_experiment.py`. We include an example config for benchmarking the **W-state** preparation.
+
+```
+python src/RLSComp/run_experiment.py --config=configs/w_state_config.yaml
+```
+
+Any experiment can be run by creating an arbitrary config  `my_experiment.yaml` file:
+
+```
+experiment: my_experiment
+
+input_type: regex          # Options: "regex" or "bitstring_list"
+# If using regex
+regex: "(0)*1(0)*"
+regex_complement: False  # If True, prepares all bitstrings that do not match the regex
+
+# If using input_type: bitstring_list
+# Provide bitstring_list = ["0001", "0010", "1000"]
+
+system_sizes: [4]  # System sizes to benchmark. For input_type: regex it is possible to provide multiple
+methods: [SeqRLSP, TreeRLSP, qualtran, qiskit, gleinig_sparse, bartschi2019_dicke]
+# These are all available methods. Note that some methods might not be suitable for some inputs/large system sizes     
+
+plotting: True
+plot_output: figs/my_experiment_plot.pdf
+```
+
+## Citation
+
+If you use this code, please cite this paper using the following bibtex entry:
+
+```
+@misc{RLSComp,
+      title={Compiling Quantum Regular Language States},
+      author={Armando Bellante and Reinis Irmejs and Marta Florido-Llinàs and María Cea Fernández and Marianna Crupi and Matthew Kiser and J. Ignacio Cirac},
+      year={2026},
+      eprint={2602.02698},
+      archivePrefix={arXiv},
+      primaryClass={quant-ph},
+      url={https://arxiv.org/abs/2602.02698},
+}
 ```
 
 
