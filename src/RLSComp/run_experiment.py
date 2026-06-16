@@ -13,7 +13,7 @@ from .regex_utils import regex_to_dfa, list_to_acdfa_direct, accepted_strings
 from .mps_utils import DFA_to_MPS, MPS_to_list, MPS_to_state, ACDFA_to_MPS
 from .circuit_utils import  MPS_to_circuit_SeqRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
 from .benchmarking_utils import get_our_cost_from_circ, get_qiskit_stats, get_bartschi2019_stats, get_gleinig_sparse_stats, get_qualtran_sparse_stats
-from .motzkin_utils import get_motzkin_strings, motzkinDFA, even_motzkin_count
+from .motzkin_utils import get_motzkin_strings, motzkin_dfa, even_motzkin_count
 
 
 def build_mps(input_type, regex, bitstrings, system_size,complement=False):
@@ -25,7 +25,7 @@ def build_mps(input_type, regex, bitstrings, system_size,complement=False):
         acdfa = list_to_acdfa_direct(bitstrings, complement=complement)
         return ACDFA_to_MPS(acdfa)
     elif input_type == "motzkin":
-        dfa = motzkinDFA(system_size)
+        dfa = motzkin_dfa(system_size)
         A, v_l, v_r = DFA_to_MPS(dfa)
         return MPS_to_list(A, v_l, v_r, system_size)
     else:

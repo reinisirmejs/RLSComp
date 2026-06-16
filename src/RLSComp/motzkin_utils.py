@@ -5,7 +5,7 @@ import math
 # Given a system size n, it builds the DFA for a Motzkin state 
 # By default, 0 goes up and 1 goes down. 
 # You can switch the zeroup flag to False if you want 1 to go up and 0 down.
-def motzkinDFA(n, zeroup=True):
+def motzkin_dfa(n, zeroup=True):
 	if n%2:
 		raise ValueError("Motzkin states with two symbols only exist for even n.")
 
@@ -42,7 +42,7 @@ def motzkinDFA(n, zeroup=True):
 
 # Given a system size n, gives you the strings that compose the Motzkin 
 def get_motzkin_strings(n):
-	dfa = motzkinDFA(n)
+	dfa = motzkin_dfa(n)
 	return accepted_strings_cyclic_dfa(dfa, n)
     
 def catalan(n: int) -> int:

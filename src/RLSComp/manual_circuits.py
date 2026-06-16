@@ -139,46 +139,6 @@ def dicke_k_state_circuit(n,k):
     return circ
 
 
-def dicke_3_final_gate():
-    s = 1 / np.sqrt(2)
-    # U defined in the basis (|00>,|01>,|10>,|11>) for qubits ordered as |q0 q1>
-    U = np.array([
-        [0,   0,  0,  1],
-        [s,   0,  s,  0],
-        [-s,  0,  s,  0],
-        [0,   1,  0,  0],
-    ], dtype=complex)
-    qc = QuantumCircuit(2)
-    # If you want this U to act on (q0,q1) in the |q0 q1> sense,
-    # you typically append on [q1,q0] because Qiskit is little-endian.
-    qc.append(UnitaryGate(U), [0, 1])
-    return qc
-
-
-def dicke_3_state_circuit(n):
-    if n < 3:
-        raise ValueError("Dicke state with 3 excitations requires at least 3 qubits.")
-    circ = QuantumCircuit(n)
-    for i in range(n-2):
-        #circ.x(1)
-        #circ.x(2)
-        # theta_arr = [-2*np.arcsin(np.sqrt(3/(n-i))), -2*np.arcsin(np.sqrt(2/(n-i))),-2*np.arcsin(np.sqrt(1/(n-i))),0]
-        # print(np.sin(np.array(theta_arr)/2))
-        theta_arr = generate_theta_rotation_array(n-i, 3)
-        counting_gate = dicke_control_counting_gate(3, theta_arr)
-        acting_on_qubits = [j for j in range(2+i, i-1, -1)]  # controls first, then target
-        circ.append(counting_gate, acting_on_qubits)
-        circ.ccx(i,i+1,i+2)
-        circ.cx(i, i+1)
-        if i<n-3:
-            circ.swap(i+2, i+3)
-            circ.swap(i+1, i+2)
-
-
-    circ.append(dicke_3_final_gate(), [n-2, n-1])  # controls first, then target
-    
-    return circ
-
 def w_state_circuit(n):
     circ = QuantumCircuit(n)
     for i in range(n-1):

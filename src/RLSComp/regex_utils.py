@@ -8,11 +8,6 @@ def is_dfa(obj):
 def is_regex(obj):
     return isinstance(obj, str)
 
-def regex_fmt(user_lst):
-    # Format each string in the list
-    formatted_strings = [''.join(f'({char})' for char in s) for s in user_lst]
-    # Join all the formatted strings with a pipe character
-    return '|'.join(formatted_strings)
 
 def regex_to_dfa(regex,complement=False):
     # Convert regex to an NFA
