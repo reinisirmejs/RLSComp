@@ -1,6 +1,5 @@
 from pyformlang.regular_expression import Regex
 from pyformlang.finite_automaton import DeterministicFiniteAutomaton, State, Symbol
-import random
 
 def is_dfa(obj):
     # Best: isinstance(obj, DFA)
@@ -97,14 +96,6 @@ def get_finite_complement(dfa):
 
     return dfa
 
-def list_to_acdfa(lst,complement=False):
-    regex = regex_fmt(lst)
-    dfa = regex_to_dfa(regex,complement=False)
-    if complement:
-        dfa = get_finite_complement(dfa)
-
-    return 
-
 def list_to_acdfa_direct(lst, complement=False):
     dfa = DeterministicFiniteAutomaton()
     state_counter = 0
@@ -137,33 +128,6 @@ def list_to_acdfa_direct(lst, complement=False):
         dfa = get_finite_complement(dfa)
 
     return dfa
-
-def compare_dfa_builders(num_strings, bitstring_length):
-    bitstrings = [''.join(random.choice("01") for _ in range(bitstring_length)) for _ in range(num_strings)]
-
-    dfa_regex = list_to_acdfa(bitstrings)
-    dfa_direct = list_to_acdfa_direct(bitstrings)
-
-    accepted_by_regex = set(accepted_strings(dfa_regex))
-    accepted_by_direct = set(accepted_strings(dfa_direct))
-
-    len_regex = len(dfa_regex.states)
-    len_direct = len(dfa_direct.states)
-
-    if accepted_by_regex == accepted_by_direct:
-        print("Both DFAs accept the same set of strings.")
-    else:
-        print("Mismatch detected!")
-        print("Strings accepted by regex DFA but not by direct DFA:", accepted_by_regex - accepted_by_direct)
-        print("Strings accepted by direct DFA but not by regex DFA:", accepted_by_direct - accepted_by_regex)
-
-    if len_regex == len_direct:
-        print("Both DFAs have the same state lenght.")
-    else:
-        print("Mismatch detected!")
-        print("Lenght of regex DFA vs direct DFA:", len_regex,len_direct)
-
-    return bitstrings, accepted_by_regex, accepted_by_direct
 
 def accepted_strings_cyclic_dfa(dfa, system_size):
     """Generate all accepted strings of exactly a given system size from a DFA."""

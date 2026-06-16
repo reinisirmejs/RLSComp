@@ -31,46 +31,88 @@ pip install git+https://github.com/reinisirmejs/RLSComp.git
 
 ### Using the Core Functions
 
-Use the circuit builders directly:
+Both `build_SeqRLSP_circuit` and `build_TreeRLSP_circuit` return a `qiskit.circuit.QuantumCircuit` that prepares the equal superposition over all strings in the specified language. They are imported as:
 
-`from RLSComp import build_SeqRLSP_circuit, build_TreeRLSP_circuit`
-
-which both admit the following possible inputs:
-
-#### Regex or system size
-
+```python
+from RLSComp import build_SeqRLSP_circuit, build_TreeRLSP_circuit
 ```
+
+Both functions accept the same types of input.
+
+#### Regex and system size
+
+```python
 regex = "(0)*1(0)*" 
 num_qubits = 5 
 circuit = build_SeqRLSP_circuit(regex, num_qubits)
 ```
 
+The `complement=True` keyword prepares instead the equal superposition over all strings that do **not** match the regex:
+
+```python
+circuit = build_SeqRLSP_circuit(regex, num_qubits, complement=True)
+```
+
 #### Bitstring list
 
-```
+All bitstrings must have the same length. The system size is inferred automatically.
+
+```python
 bitstring_list = ["000", "010", "111"] 
 circuit = build_SeqRLSP_circuit(bitstring_list) 
 ```
 
+The `complement=True` keyword is also supported here and prepares the superposition over all same-length bitstrings **not** in the list:
+
+```python
+circuit = build_SeqRLSP_circuit(bitstring_list, complement=True)
+```
+
 #### DFA
 
-The DFA is given as a `pyformlang.finite_automaton.DeterministicFiniteAutomaton` object
+The DFA must be a `pyformlang.finite_automaton.DeterministicFiniteAutomaton` object over the binary alphabet `{0, 1}`.
 
-```
+For an **acyclic DFA** (finite language), the system size is inferred from the DFA structure:
+
+```python
 circuit = build_SeqRLSP_circuit(dfa) 
+```
+
+For a **cyclic DFA** (infinite language, e.g., built from a regex), a `system_size` must be provided:
+
+```python
+circuit = build_SeqRLSP_circuit(dfa, system_size=6)
+```
+
+The `complement=True` keyword is also supported for both acyclic and cyclic DFAs:
+
+```python
+circuit = build_SeqRLSP_circuit(dfa, complement=True)             # acyclic
+circuit = build_SeqRLSP_circuit(dfa, system_size=6, complement=True)  # cyclic
 ```
 
 #### MPS
 
-```
+```python
 circuit = build_SeqRLSP_circuit(MPS) 
 ```
-where the MPS over a sequence of symbols $x_1, x_2, \dots, x_N \in \Sigma$ is represented as a `List` of rank-3 tensors $\{A^[1], A^[2], \dots , A^[N]\}$. Each local tensor is stored as a `numpy.ndarray` and indexed as $A[x,i,j]$, where
+
+where the MPS over a sequence of symbols $x_1, x_2, \dots, x_N \in \Sigma$ is represented as a `List` of rank-3 tensors $\{A^{[1]}, A^{[2]}, \dots , A^{[N]}\}$. Each local tensor is stored as a `numpy.ndarray` and indexed as $A[x,i,j]$, where
 - $x$ is the physical index corresponding to the input symbol,
 - $i$ is the left virtual (bond) index,
 - $j$ is the right virtual (bond) index.
 
+#### Advanced: SeqRLSP with isometries
 
+`build_SeqRLSP_circuit` accepts an optional `use_isometries=True` keyword that switches to the SeqIsoRLSP compilation strategy. Instead of padding each isometry to a full square unitary, the rectangular isometries are handed directly to Qiskit's built-in isometry synthesis:
+
+```python
+circuit = build_SeqRLSP_circuit(regex, num_qubits, use_isometries=True)
+```
+
+This can be useful when you want Qiskit to handle the isometry-to-unitary step during transpilation rather than up front.
+
+---
 
 ## 2. Full functionality and reproducibility
 
@@ -119,15 +161,14 @@ If you use this code, please cite this paper using the following bibtex entry:
 
 ```
 @misc{RLSComp,
-      title={Compiling Quantum Regular Language States},
-      author={Armando Bellante and Reinis Irmejs and Marta Florido-Llinàs and María Cea Fernández and Marianna Crupi and Matthew Kiser and J. Ignacio Cirac},
-      year={2026},
-      eprint={2602.02698},
-      archivePrefix={arXiv},
-      primaryClass={quant-ph},
-      url={https://arxiv.org/abs/2602.02698},
+      title={Compiling Quantum Regular Language States},
+      author={Armando Bellante and Reinis Irmejs and Marta Florido-Llinàs and María Cea Fernández and Marianna Crupi and Matthew Kiser and J. Ignacio Cirac},
+      year={2026},
+      eprint={2602.02698},
+      archivePrefix={arXiv},
+      primaryClass={quant-ph},
+      url={https://arxiv.org/abs/2602.02698},
 }
 ```
-
 
 

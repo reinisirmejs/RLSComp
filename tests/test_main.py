@@ -1,12 +1,13 @@
 import sys
 import os
+import pytest
 import numpy as np
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from RLSComp.regex_utils import accepted_strings, list_to_acdfa_direct
 from RLSComp.mps_utils import MPS_to_state, ACDFA_to_MPS, get_tree_decomposition, get_state_from_tree, build_mps_from_regex, build_mps_from_DFA, build_dicke_mps_from_bitstrings, build_mps_from_bitstrings
 from RLSComp.circuit_utils import MPS_to_circuit_SeqRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
 from RLSComp.benchmarking_utils import get_gleinig_sparse_stats
-from RLSComp.interface import build_SeqRLSP_circuit
+from RLSComp.interface import build_SeqRLSP_circuit, build_TreeRLSP_circuit
 from qiskit.quantum_info import Statevector
 
 """
@@ -246,6 +247,13 @@ def test_SeqRLSP_from_bitstrings():
     circ = build_SeqRLSP_circuit(bitstrings)
     assert verify_state(target_state, circ)
 
+def test_SeqRLSP_from_bitstrings_no_reflection_symmetry():
+    bitstrings = ["0000", "0001"]
+    MPS_LIST = build_mps_from_bitstrings(bitstrings)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_SeqRLSP_circuit(bitstrings)
+    assert verify_state(target_state, circ)
+
 def test_SeqRLSP_from_dfa():
     regex = "(0)*1(0)*1(0)*"
     n = 6
@@ -310,3 +318,321 @@ def test_motzkin_state_preparation():
 
     circ_dfa = build_SeqRLSP_circuit(dfa, n)
     assert verify_state(target_state, circ_dfa)
+
+
+# ============================================================================================
+# Tests for the interface — SeqRLSP with use_isometries=True
+# ============================================================================================
+
+def test_SeqRLSP_iso_from_regex():
+    regex = "(0)*1(0)*1(0)*"
+    n = 6
+    MPS_LIST, _ = build_mps_from_regex(regex, n)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_SeqRLSP_circuit(regex, n, use_isometries=True)
+    assert verify_state(target_state, circ)
+
+def test_SeqRLSP_iso_from_bitstrings():
+    bitstrings = ["00101", "01001", "10001"]
+    MPS_LIST = build_mps_from_bitstrings(bitstrings)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_SeqRLSP_circuit(bitstrings, use_isometries=True)
+    assert verify_state(target_state, circ)
+
+def test_SeqRLSP_iso_from_dfa():
+    bitstrings = ["100110", "000010", "001011", "111111", "000001", "111000"]
+    acdfa = list_to_acdfa_direct(bitstrings)
+    MPS_LIST = build_mps_from_DFA(acdfa)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_SeqRLSP_circuit(acdfa, use_isometries=True)
+    assert verify_state(target_state, circ)
+
+def test_SeqRLSP_iso_from_mps():
+    regex = "(0)*1(0)*"
+    n = 5
+    MPS_LIST, _ = build_mps_from_regex(regex, n)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_SeqRLSP_circuit(MPS_LIST, use_isometries=True)
+    assert verify_state(target_state, circ)
+
+
+# ============================================================================================
+# Tests for the interface — SeqRLSP with complement=True
+# ============================================================================================
+
+def test_SeqRLSP_complement_from_regex():
+    regex = "(0)*1(0)*1(0)*"
+    n = 5
+    MPS_LIST, _ = build_mps_from_regex(regex, n, complement=True)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_SeqRLSP_circuit(regex, n, complement=True)
+    assert verify_state(target_state, circ)
+
+def test_SeqRLSP_complement_from_bitstrings():
+    bitstrings = ["00101", "01001", "10001"]
+    MPS_LIST = build_mps_from_bitstrings(bitstrings, complement=True)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_SeqRLSP_circuit(bitstrings, complement=True)
+    assert verify_state(target_state, circ)
+
+def test_SeqRLSP_complement_from_acyclic_dfa():
+    bitstrings = ["001", "010", "100"]
+    acdfa = list_to_acdfa_direct(bitstrings)
+    MPS_LIST = build_mps_from_bitstrings(bitstrings, complement=True)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_SeqRLSP_circuit(acdfa, complement=True)
+    assert verify_state(target_state, circ)
+
+def test_SeqRLSP_complement_from_cyclic_dfa():
+    regex = "(0)*1(0)*1(0)*"
+    n = 5
+    _, dfa = build_mps_from_regex(regex, n)
+    MPS_LIST, _ = build_mps_from_regex(regex, n, complement=True)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_SeqRLSP_circuit(dfa, system_size=n, complement=True)
+    assert verify_state(target_state, circ)
+
+def test_SeqRLSP_error_complement_from_mps():
+    MPS_LIST, _ = build_mps_from_regex("(0)*1(0)*", 5)
+    with pytest.raises(ValueError, match="complement is not supported for MPS input"):
+        build_SeqRLSP_circuit(MPS_LIST, complement=True)
+
+
+# ============================================================================================
+# Tests for the interface — TreeRLSP with all input types
+# ============================================================================================
+
+def test_TreeRLSP_from_regex():
+    regex = "(0)*1(0)*1(0)*"
+    n = 6
+    MPS_LIST, _ = build_mps_from_regex(regex, n)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_TreeRLSP_circuit(regex, n)
+    assert verify_state(target_state, circ)
+
+def test_TreeRLSP_from_bitstrings():
+    bitstrings = ["00101", "01001", "10001", "10010"]
+    MPS_LIST = build_mps_from_bitstrings(bitstrings)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_TreeRLSP_circuit(bitstrings)
+    assert verify_state(target_state, circ)
+
+def test_TreeRLSP_from_dfa():
+    bitstrings = ["100110", "000010", "001011", "111111", "000001", "111000"]
+    acdfa = list_to_acdfa_direct(bitstrings)
+    MPS_LIST = build_mps_from_DFA(acdfa)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_TreeRLSP_circuit(acdfa)
+    assert verify_state(target_state, circ)
+
+def test_TreeRLSP_from_mps():
+    regex = "(0)*1(0)*"
+    n = 6
+    MPS_LIST, _ = build_mps_from_regex(regex, n)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_TreeRLSP_circuit(MPS_LIST)
+    assert verify_state(target_state, circ)
+
+
+# ============================================================================================
+# Tests for the interface — TreeRLSP with complement=True
+# ============================================================================================
+
+def test_TreeRLSP_complement_from_regex():
+    regex = "(0)*1(0)*1(0)*"
+    n = 5
+    MPS_LIST, _ = build_mps_from_regex(regex, n, complement=True)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_TreeRLSP_circuit(regex, n, complement=True)
+    assert verify_state(target_state, circ)
+
+def test_TreeRLSP_complement_from_bitstrings():
+    bitstrings = ["00101", "01001", "10001"]
+    MPS_LIST = build_mps_from_bitstrings(bitstrings, complement=True)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_TreeRLSP_circuit(bitstrings, complement=True)
+    assert verify_state(target_state, circ)
+
+def test_TreeRLSP_complement_from_acyclic_dfa():
+    bitstrings = ["001", "010", "100"]
+    acdfa = list_to_acdfa_direct(bitstrings)
+    MPS_LIST = build_mps_from_bitstrings(bitstrings, complement=True)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_TreeRLSP_circuit(acdfa, complement=True)
+    assert verify_state(target_state, circ)
+
+def test_TreeRLSP_complement_from_cyclic_dfa():
+    regex = "(0)*1(0)*1(0)*"
+    n = 5
+    _, dfa = build_mps_from_regex(regex, n)
+    MPS_LIST, _ = build_mps_from_regex(regex, n, complement=True)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_TreeRLSP_circuit(dfa, system_size=n, complement=True)
+    assert verify_state(target_state, circ)
+
+def test_TreeRLSP_error_complement_from_mps():
+    MPS_LIST, _ = build_mps_from_regex("(0)*1(0)*", 5)
+    with pytest.raises(ValueError, match="complement is not supported for MPS input"):
+        build_TreeRLSP_circuit(MPS_LIST, complement=True)
+
+
+# ============================================================================================
+# Tests for the interface — error / validation cases for build_SeqRLSP_circuit
+# ============================================================================================
+
+def test_SeqRLSP_error_regex_no_system_size():
+    with pytest.raises(ValueError, match="system_size must be provided"):
+        build_SeqRLSP_circuit("(0)*1(0)*")
+
+def test_SeqRLSP_error_bitstrings_with_system_size():
+    with pytest.raises(ValueError, match="system_size must not be provided"):
+        build_SeqRLSP_circuit(["00101", "01001"], system_size=5)
+
+def test_SeqRLSP_error_mixed_length_bitstrings():
+    with pytest.raises(ValueError, match="same length"):
+        build_SeqRLSP_circuit(["001", "0100", "111"])
+
+def test_SeqRLSP_error_acyclic_dfa_with_system_size():
+    acdfa = list_to_acdfa_direct(["00101", "01001"])
+    assert acdfa.is_acyclic()
+    with pytest.raises(ValueError, match="system_size must not be provided"):
+        build_SeqRLSP_circuit(acdfa, system_size=5)
+
+def test_SeqRLSP_error_cyclic_dfa_no_system_size():
+    from RLSComp.motzkin_utils import motzkinDFA
+    dfa = motzkinDFA(4)
+    assert not dfa.is_acyclic()
+    with pytest.raises(ValueError, match="system_size must be provided"):
+        build_SeqRLSP_circuit(dfa)
+
+def test_SeqRLSP_error_mps_with_system_size():
+    MPS_LIST, _ = build_mps_from_regex("(0)*1(0)*", 5)
+    with pytest.raises(ValueError, match="system_size must not be provided"):
+        build_SeqRLSP_circuit(MPS_LIST, system_size=5)
+
+def test_SeqRLSP_error_invalid_type():
+    with pytest.raises(TypeError, match="Unsupported input type"):
+        build_SeqRLSP_circuit(42)
+
+
+# ============================================================================================
+# Tests for the interface — error / validation cases for build_TreeRLSP_circuit
+# ============================================================================================
+
+def test_TreeRLSP_error_regex_no_system_size():
+    with pytest.raises(ValueError, match="system_size must be provided"):
+        build_TreeRLSP_circuit("(0)*1(0)*")
+
+def test_TreeRLSP_error_bitstrings_with_system_size():
+    with pytest.raises(ValueError, match="system_size must not be provided"):
+        build_TreeRLSP_circuit(["00101", "01001"], system_size=5)
+
+def test_TreeRLSP_error_mixed_length_bitstrings():
+    with pytest.raises(ValueError, match="same length"):
+        build_TreeRLSP_circuit(["001", "0100", "111"])
+
+def test_TreeRLSP_from_cyclic_dfa():
+    regex = "(0)*1(0)*1(0)*"
+    n = 6
+    _, dfa = build_mps_from_regex(regex, n)
+    MPS_LIST = build_mps_from_DFA(dfa, system_size=n)
+    target_state = MPS_to_state(MPS_LIST)
+    circ = build_TreeRLSP_circuit(dfa, system_size=n)
+    assert verify_state(target_state, circ)
+
+def test_TreeRLSP_error_acyclic_dfa_with_system_size():
+    acdfa = list_to_acdfa_direct(["00101", "01001"])
+    assert acdfa.is_acyclic()
+    with pytest.raises(ValueError, match="system_size must not be provided"):
+        build_TreeRLSP_circuit(acdfa, system_size=5)
+
+def test_TreeRLSP_error_cyclic_dfa_no_system_size():
+    from RLSComp.motzkin_utils import motzkinDFA
+    dfa = motzkinDFA(4)
+    assert not dfa.is_acyclic()
+    with pytest.raises(ValueError, match="system_size must be provided"):
+        build_TreeRLSP_circuit(dfa)
+
+def test_TreeRLSP_error_mps_with_system_size():
+    MPS_LIST, _ = build_mps_from_regex("(0)*1(0)*", 5)
+    with pytest.raises(ValueError, match="system_size must not be provided"):
+        build_TreeRLSP_circuit(MPS_LIST, system_size=5)
+
+def test_TreeRLSP_error_invalid_type():
+    with pytest.raises(TypeError, match="Unsupported input type"):
+        build_TreeRLSP_circuit(42)
+
+
+# ============================================================================================
+# README examples — each test mirrors a code snippet from the README verbatim
+# ============================================================================================
+
+def test_readme_package_import():
+    """README: from RLSComp import build_SeqRLSP_circuit, build_TreeRLSP_circuit"""
+    from RLSComp import build_SeqRLSP_circuit, build_TreeRLSP_circuit
+    assert callable(build_SeqRLSP_circuit)
+    assert callable(build_TreeRLSP_circuit)
+
+def test_readme_SeqRLSP_regex():
+    """README regex example — W state on 5 qubits."""
+    from RLSComp import build_SeqRLSP_circuit
+    regex = "(0)*1(0)*"
+    num_qubits = 5
+    circuit = build_SeqRLSP_circuit(regex, num_qubits)
+    MPS_LIST, _ = build_mps_from_regex(regex, num_qubits)
+    assert verify_state(MPS_to_state(MPS_LIST), circuit)
+
+def test_readme_SeqRLSP_bitstring_list():
+    """README bitstring list example."""
+    from RLSComp import build_SeqRLSP_circuit
+    bitstring_list = ["000", "010", "111"]
+    circuit = build_SeqRLSP_circuit(bitstring_list)
+    MPS_LIST = build_mps_from_bitstrings(bitstring_list)
+    assert verify_state(MPS_to_state(MPS_LIST), circuit)
+
+def test_readme_SeqRLSP_dfa():
+    """README DFA example — acyclic DFA, no system_size."""
+    from RLSComp import build_SeqRLSP_circuit
+    dfa = list_to_acdfa_direct(["000", "010", "111"])
+    circuit = build_SeqRLSP_circuit(dfa)
+    MPS_LIST = build_mps_from_bitstrings(["000", "010", "111"])
+    assert verify_state(MPS_to_state(MPS_LIST), circuit)
+
+def test_readme_SeqRLSP_mps():
+    """README MPS example."""
+    from RLSComp import build_SeqRLSP_circuit
+    MPS_LIST, _ = build_mps_from_regex("(0)*1(0)*", 5)
+    circuit = build_SeqRLSP_circuit(MPS_LIST)
+    assert verify_state(MPS_to_state(MPS_LIST), circuit)
+
+def test_readme_TreeRLSP_regex():
+    """README: build_TreeRLSP_circuit admits the same inputs — regex."""
+    from RLSComp import build_TreeRLSP_circuit
+    regex = "(0)*1(0)*"
+    num_qubits = 5
+    circuit = build_TreeRLSP_circuit(regex, num_qubits)
+    MPS_LIST, _ = build_mps_from_regex(regex, num_qubits)
+    assert verify_state(MPS_to_state(MPS_LIST), circuit)
+
+def test_readme_TreeRLSP_bitstring_list():
+    """README: build_TreeRLSP_circuit admits the same inputs — bitstring list."""
+    from RLSComp import build_TreeRLSP_circuit
+    bitstring_list = ["000", "010", "111"]
+    circuit = build_TreeRLSP_circuit(bitstring_list)
+    MPS_LIST = build_mps_from_bitstrings(bitstring_list)
+    assert verify_state(MPS_to_state(MPS_LIST), circuit)
+
+def test_readme_TreeRLSP_dfa():
+    """README: build_TreeRLSP_circuit admits the same inputs — acyclic DFA."""
+    from RLSComp import build_TreeRLSP_circuit
+    dfa = list_to_acdfa_direct(["000", "010", "111"])
+    circuit = build_TreeRLSP_circuit(dfa)
+    MPS_LIST = build_mps_from_bitstrings(["000", "010", "111"])
+    assert verify_state(MPS_to_state(MPS_LIST), circuit)
+
+def test_readme_TreeRLSP_mps():
+    """README: build_TreeRLSP_circuit admits the same inputs — MPS."""
+    from RLSComp import build_TreeRLSP_circuit
+    MPS_LIST, _ = build_mps_from_regex("(0)*1(0)*", 5)
+    circuit = build_TreeRLSP_circuit(MPS_LIST)
+    assert verify_state(MPS_to_state(MPS_LIST), circuit)

@@ -57,6 +57,13 @@ def is_bitstring_list(obj):
         and all(isinstance(b, str) for b in obj)
     )
 
+def validate_bitstring_list(bitstrings):
+    lengths = {len(b) for b in bitstrings}
+    if len(lengths) > 1:
+        raise ValueError(
+            f"All bitstrings must have the same length, got lengths: {sorted(lengths)}"
+        )
+
 """
 MPS builder functions from different inputs
 """
