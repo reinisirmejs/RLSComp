@@ -67,6 +67,8 @@ def get_our_cost_from_circ(circuit):
     Returns:
         tuple: (circuit depth, number of qubits)
     """
+    while any(op.name == 'isometry' for op in circuit.data):
+        circuit = circuit.decompose('isometry')
     our_circuit_t = transpile(circuit, basis_gates=['cx', 'rz', 'sx', 'x', 'id'],optimization_level=3)
     return our_circuit_t.depth(), our_circuit_t.num_qubits, our_circuit_t
 
