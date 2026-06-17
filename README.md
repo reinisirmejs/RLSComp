@@ -102,15 +102,13 @@ where the MPS over a sequence of symbols $x_1, x_2, \dots, x_N \in \Sigma$ is re
 - $i$ is the left virtual (bond) index,
 - $j$ is the right virtual (bond) index.
 
-#### Advanced: SeqRLSP with isometries
+#### Isometry decomposition
 
-`build_SeqRLSP_circuit` accepts an optional `use_isometries=True` keyword that switches to the SeqIsoRLSP compilation strategy. Instead of padding each isometry to a full square unitary, the rectangular isometries are handed directly to Qiskit's built-in isometry synthesis:
+`build_SeqRLSP_circuit` uses `use_isometries=True` by default, which keeps the rectangular isometries and decomposes them using Qiskit's `Isometry` gate synthesis. Setting `use_isometries=False` instead pads each isometry to a full square unitary and decomposes it using Qiskit's `UnitaryGate` synthesis:
 
 ```python
-circuit = build_SeqRLSP_circuit(regex, num_qubits, use_isometries=True)
+circuit = build_SeqRLSP_circuit(regex, num_qubits, use_isometries=False)
 ```
-
-This can be useful when you want Qiskit to handle the isometry-to-unitary step during transpilation rather than up front.
 
 ---
 
@@ -128,10 +126,10 @@ pytest tests/
 
 ### Running experiments
 
-We can run an experiment that compares the resources for different methods using the `run_experiment.py`. We include an example config for benchmarking the **W-state** preparation.
+We can run an experiment that compares the resources for different methods using the `run_experiment.py`. We include an example config in `configs/my_experiment.yaml`.
 
 ```
-python src/RLSComp/run_experiment.py --config=configs/w_state_config.yaml
+python -m RLSComp.run_experiment --config=configs/my_experiment.yaml
 ```
 
 Any experiment can be run by creating an arbitrary config  `my_experiment.yaml` file:
@@ -147,8 +145,8 @@ regex_complement: False  # If True, prepares all bitstrings that do not match th
 # If using input_type: bitstring_list
 # Provide bitstring_list = ["0001", "0010", "1000"]
 
-system_sizes: [4]  # System sizes to benchmark. For input_type: regex it is possible to provide multiple
-methods: [SeqRLSP, TreeRLSP, qualtran, qiskit, gleinig_sparse, bartschi2019_dicke]
+system_sizes: [4, 8]  # System sizes to benchmark. For input_type: regex it is possible to provide multiple
+methods: [SeqRLSP, SeqUnitRLSP, TreeRLSP, qualtran, qiskit, gleinig_sparse, bartschi2019_dicke]
 # These are all available methods. Note that some methods might not be suitable for some inputs/large system sizes     
 
 plotting: True

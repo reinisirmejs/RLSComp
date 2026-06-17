@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 from .regex_utils import regex_to_dfa, list_to_acdfa_direct, accepted_strings
 from .mps_utils import DFA_to_MPS, MPS_to_list, MPS_to_state, ACDFA_to_MPS
-from .circuit_utils import  MPS_to_circuit_SeqRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
+from .circuit_utils import  MPS_to_circuit_SeqUnitRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
 from .benchmarking_utils import get_our_cost_from_circ, get_qiskit_stats, get_bartschi2019_stats, get_gleinig_sparse_stats, get_qualtran_sparse_stats
 from .motzkin_utils import get_motzkin_strings, motzkin_dfa, even_motzkin_count
 
@@ -39,26 +39,25 @@ Run our Option 1 - SeqRLSP with unitaries constructed from unitary matrices or i
 def run_SeqRLSP(n,config):
     start = time.perf_counter()
     MPS_LIST = build_mps(config["input_type"], config.get("regex", None), config.get("bitstrings", []), n, complement=config.get("regex_complement", False))
-    our_circ = MPS_to_circuit_SeqRLSP(MPS_LIST)
-    depth, qubits, our_circ_transpiled = get_our_cost_from_circ(our_circ)
-    end = time.perf_counter()
-    our_time = end - start
-    all_gates = our_circ_transpiled.size()
-    two_gates = our_circ_transpiled.num_nonlocal_gates()
-    print("SeqRLSP time was: ", our_time,flush=True)
-    return qubits, depth, two_gates, all_gates, our_time, our_circ_transpiled
-
-
-def run_SeqIsoRLSP(n,config):
-    start = time.perf_counter()
-    MPS_LIST = build_mps(config["input_type"], config.get("regex", None), config.get("bitstrings", []), n, complement=config.get("regex_complement", False))
     our_circ = MPS_to_circuit_SeqIsoRLSP(MPS_LIST)
     depth, qubits, our_circ_transpiled = get_our_cost_from_circ(our_circ)
     end = time.perf_counter()
     our_time = end - start
     all_gates = our_circ_transpiled.size()
     two_gates = our_circ_transpiled.num_nonlocal_gates()
-    print("SeqIsoRLSP time was: ", our_time, flush=True)
+    print("SeqRLSP time was: ", our_time, flush=True)
+    return qubits, depth, two_gates, all_gates, our_time, our_circ_transpiled
+
+def run_SeqUnitRLSP(n,config):
+    start = time.perf_counter()
+    MPS_LIST = build_mps(config["input_type"], config.get("regex", None), config.get("bitstrings", []), n, complement=config.get("regex_complement", False))
+    our_circ = MPS_to_circuit_SeqUnitRLSP(MPS_LIST)
+    depth, qubits, our_circ_transpiled = get_our_cost_from_circ(our_circ)
+    end = time.perf_counter()
+    our_time = end - start
+    all_gates = our_circ_transpiled.size()
+    two_gates = our_circ_transpiled.num_nonlocal_gates()
+    print("SeqUnitRLSP time was: ", our_time,flush=True)
     return qubits, depth, two_gates, all_gates, our_time, our_circ_transpiled
 
 """
@@ -215,8 +214,8 @@ def run_gleinig_sparse(n, config):
     return qubits, depth, two_gates, all_gates, gleinig_time, circ
 
 RUNNERS = {
+    "SeqUnitRLSP": run_SeqUnitRLSP,
     "SeqRLSP": run_SeqRLSP,
-    "SeqIsoRLSP": run_SeqIsoRLSP,
     "TreeRLSP": run_TreeRLSP,
     "qiskit": run_qiskit,
     "qualtran": run_qualtran,
@@ -312,13 +311,13 @@ def plot_results(config, results):
     nrows = (n_plots + ncols - 1) // ncols  # auto-expand rows as needed
     fig, axes = plt.subplots(nrows, ncols, figsize=(6.5, 3 * nrows), sharex=True)
     axes = axes.flatten()
-    method_res_key = {  "qiskit": ("Qiskit", "-"),
-                        "qualtran": ("Qualtran", "-"),
-                        "bartschi2019_dicke": ("Bärtschi 2019", ":"),
-                        "gleinig_sparse": ("Gleinig Sparse", ":"),
-                        "SeqRLSP": ("SeqRLSP", "--"),
-                        "SeqIsoRLSP": ("SeqIsoRLSP", "--"),
-                        "TreeRLSP": ("TreeRLSP", "--")}
+    method_res_key = {  "qiskit": ("Qiskit", "--"),
+                        "qualtran": ("Qualtran", "--"),
+                        "bartschi2019_dicke": ("Bärtschi 2019", "--"),
+                        "gleinig_sparse": ("Gleinig 2021", "--"),
+                        "SeqUnitRLSP": ("SeqUnitRLSP", "-"),
+                        "SeqRLSP": ("SeqRLSP", "-"),
+                        "TreeRLSP": ("TreeRLSP", "-")}
     for ax, (quantity, (ylabel, yscale)) in zip(axes, plot_quantities.items()):
         for method in config["methods"]:
             method_name, method_linestyle = method_res_key.get(method, None)

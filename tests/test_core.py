@@ -9,7 +9,7 @@ from RLSComp.mps_utils import (
     build_mps_from_regex, build_mps_from_DFA, build_dicke_mps_from_bitstrings,
     build_mps_from_bitstrings,
 )
-from RLSComp.circuit_utils import MPS_to_circuit_SeqRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
+from RLSComp.circuit_utils import MPS_to_circuit_SeqUnitRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
 from RLSComp.interface import build_SeqRLSP_circuit, build_TreeRLSP_circuit
 from qiskit.quantum_info import Statevector
 
@@ -94,26 +94,26 @@ def test_multiple_of_3_approach():
 
 
 # ============================================================================================
-# Tests for SeqIsoRLSP and SeqRLSP
+# Tests for SeqRLSP and SeqUnitRLSP
 # ============================================================================================
 
-def test_SeqRLSP_W():
+def test_SeqUnitRLSP_W():
     regex = "(0)*1(0)*"
     n = 10
     MPS_LIST, dfa = build_mps_from_regex(regex, n)
     target_state = MPS_to_state(MPS_LIST)
-    circ = MPS_to_circuit_SeqRLSP(MPS_LIST)
+    circ = MPS_to_circuit_SeqUnitRLSP(MPS_LIST)
     assert verify_state(target_state, circ)
 
-def test_SeqRLSP_dicke():
+def test_SeqUnitRLSP_dicke():
     regex = "(0)*1(0)*1(0)*1(0)*"
     n = 8
     MPS_LIST, dfa = build_mps_from_regex(regex, n)
     target_state = MPS_to_state(MPS_LIST)
-    circ = MPS_to_circuit_SeqRLSP(MPS_LIST)
+    circ = MPS_to_circuit_SeqUnitRLSP(MPS_LIST)
     assert verify_state(target_state, circ)
 
-def test_SeqIsoRLSP_dicke():
+def test_SeqRLSP_dicke_iso():
     regex = "(0)*1(0)*1(0)*1(0)*"
     n = 8
     MPS_LIST, dfa = build_mps_from_regex(regex, n)
@@ -121,7 +121,7 @@ def test_SeqIsoRLSP_dicke():
     circ = MPS_to_circuit_SeqIsoRLSP(MPS_LIST)
     assert verify_state(target_state, circ)
 
-def test_SeqIsoRLSP_product():
+def test_SeqRLSP_product():
     bitstring_list = ["000000"]
     acdfa = list_to_acdfa_direct(bitstring_list)
     MPS_LIST = ACDFA_to_MPS(acdfa)
@@ -129,7 +129,7 @@ def test_SeqIsoRLSP_product():
     circ = MPS_to_circuit_SeqIsoRLSP(MPS_LIST)
     assert verify_state(target_state, circ)
 
-def test_SeqIsoRLSP_arbitrary():
+def test_SeqRLSP_arbitrary():
     bitstring_list = ["100110", "000010", "001011", "111111", "000001", "111000"]
     acdfa = list_to_acdfa_direct(bitstring_list)
     MPS_LIST = ACDFA_to_MPS(acdfa)
@@ -249,38 +249,38 @@ def test_motzkin_state_preparation():
 
 
 # ============================================================================================
-# Tests for the interface — SeqRLSP with use_isometries=True
+# Tests for the interface — SeqUnitRLSP with use_isometries=False
 # ============================================================================================
 
-def test_SeqRLSP_iso_from_regex():
+def test_SeqUnitRLSP_from_regex():
     regex = "(0)*1(0)*1(0)*"
     n = 6
     MPS_LIST, _ = build_mps_from_regex(regex, n)
     target_state = MPS_to_state(MPS_LIST)
-    circ = build_SeqRLSP_circuit(regex, n, use_isometries=True)
+    circ = build_SeqRLSP_circuit(regex, n, use_isometries=False)
     assert verify_state(target_state, circ)
 
-def test_SeqRLSP_iso_from_bitstrings():
+def test_SeqUnitRLSP_from_bitstrings():
     bitstrings = ["00101", "01001", "10001"]
     MPS_LIST = build_mps_from_bitstrings(bitstrings)
     target_state = MPS_to_state(MPS_LIST)
-    circ = build_SeqRLSP_circuit(bitstrings, use_isometries=True)
+    circ = build_SeqRLSP_circuit(bitstrings, use_isometries=False)
     assert verify_state(target_state, circ)
 
-def test_SeqRLSP_iso_from_dfa():
+def test_SeqUnitRLSP_from_dfa():
     bitstrings = ["100110", "000010", "001011", "111111", "000001", "111000"]
     acdfa = list_to_acdfa_direct(bitstrings)
     MPS_LIST = build_mps_from_DFA(acdfa)
     target_state = MPS_to_state(MPS_LIST)
-    circ = build_SeqRLSP_circuit(acdfa, use_isometries=True)
+    circ = build_SeqRLSP_circuit(acdfa, use_isometries=False)
     assert verify_state(target_state, circ)
 
-def test_SeqRLSP_iso_from_mps():
+def test_SeqUnitRLSP_from_mps():
     regex = "(0)*1(0)*"
     n = 5
     MPS_LIST, _ = build_mps_from_regex(regex, n)
     target_state = MPS_to_state(MPS_LIST)
-    circ = build_SeqRLSP_circuit(MPS_LIST, use_isometries=True)
+    circ = build_SeqRLSP_circuit(MPS_LIST, use_isometries=False)
     assert verify_state(target_state, circ)
 
 

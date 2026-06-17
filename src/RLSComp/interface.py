@@ -1,8 +1,8 @@
 from .mps_utils import build_mps_from_DFA, build_mps_from_regex, build_mps_from_bitstrings, is_mps, is_bitstring_list, validate_bitstring_list
-from .circuit_utils import MPS_to_circuit_SeqRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
+from .circuit_utils import MPS_to_circuit_SeqUnitRLSP, MPS_to_circuit_SeqIsoRLSP, Tree_to_circuit
 from .regex_utils import is_dfa, is_regex, get_finite_complement
 
-def build_SeqRLSP_circuit(input_obj, system_size=None, *, complement=False, use_isometries=False):
+def build_SeqRLSP_circuit(input_obj, system_size=None, *, complement=False, use_isometries=True):
     """
     Build a SeqRLSP circuit from various input types.
 
@@ -91,7 +91,7 @@ def build_SeqRLSP_circuit(input_obj, system_size=None, *, complement=False, use_
     if use_isometries:
         return MPS_to_circuit_SeqIsoRLSP(MPS_LIST)
     else:
-        return MPS_to_circuit_SeqRLSP(MPS_LIST)
+        return MPS_to_circuit_SeqUnitRLSP(MPS_LIST)
     
 
 def build_TreeRLSP_circuit(input_obj, system_size=None, *, complement=False):

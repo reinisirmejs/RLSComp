@@ -34,7 +34,7 @@ Option 1: This function takes the unitaries directly from get_no_ancilla_unitari
 Here we directly exploit the MPS structure and carefully create unitary operators directly from the isometries
 """
 
-def MPS_to_circuit_SeqRLSP(MPS_LIST):
+def MPS_to_circuit_SeqUnitRLSP(MPS_LIST):
     unitaries, _ = get_no_ancilla_unitaries_from_MPS(MPS_LIST)
     system_size = len(unitaries)
     big_ckt = QuantumCircuit(system_size)

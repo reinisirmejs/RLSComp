@@ -101,21 +101,21 @@ def test_run_experiment_build_mps_invalid_type():
     with pytest.raises(ValueError, match="Unsupported input_type"):
         build_mps("unknown", None, [], 4)
 
-def test_run_experiment_run_SeqRLSP():
-    from RLSComp.run_experiment import run_SeqRLSP
+def test_run_experiment_run_SeqUnitRLSP():
+    from RLSComp.run_experiment import run_SeqUnitRLSP
     n = 5
     config = {"input_type": "regex", "regex": "(0)*1(0)*", "regex_complement": False}
-    qubits, depth, _, all_gates, time_taken, _ = run_SeqRLSP(n, config)
+    qubits, depth, _, all_gates, time_taken, _ = run_SeqUnitRLSP(n, config)
     assert qubits == n
     assert depth > 0
     assert all_gates > 0
     assert time_taken >= 0
 
-def test_run_experiment_run_SeqIsoRLSP():
-    from RLSComp.run_experiment import run_SeqIsoRLSP
+def test_run_experiment_run_SeqRLSP():
+    from RLSComp.run_experiment import run_SeqRLSP
     n = 5
     config = {"input_type": "regex", "regex": "(0)*1(0)*", "regex_complement": False}
-    qubits, depth, _, all_gates, time_taken, _ = run_SeqIsoRLSP(n, config)
+    qubits, depth, _, all_gates, time_taken, _ = run_SeqRLSP(n, config)
     assert qubits == n
     assert depth > 0
     assert all_gates > 0
@@ -139,11 +139,11 @@ def test_run_experiment_method_max_n():
         "regex": "(0)*1(0)*",
         "regex_complement": False,
         "system_sizes": [4, 6, 8],
-        "methods": ["SeqRLSP", "TreeRLSP"],
+        "methods": ["SeqUnitRLSP", "TreeRLSP"],
         "method_max_n": {"TreeRLSP": 5},
     }
     results = run_experiment(config)
-    assert all(v > 0 for v in results["SeqRLSP_depth"])
+    assert all(v > 0 for v in results["SeqUnitRLSP_depth"])
     assert results["TreeRLSP_depth"][0] > 0
     assert math.isnan(results["TreeRLSP_depth"][1])
     assert math.isnan(results["TreeRLSP_depth"][2])
@@ -155,11 +155,11 @@ def test_run_experiment_end_to_end():
         "regex": "(0)*1(0)*",
         "regex_complement": False,
         "system_sizes": [4, 6],
-        "methods": ["SeqRLSP", "TreeRLSP"],
+        "methods": ["SeqUnitRLSP", "TreeRLSP"],
     }
     results = run_experiment(config)
     assert results["sizes"] == [4, 6]
-    for method in ["SeqRLSP", "TreeRLSP"]:
+    for method in ["SeqUnitRLSP", "TreeRLSP"]:
         for field in ["qubits", "depth", "2gates", "gates", "time"]:
             assert len(results[f"{method}_{field}"]) == 2
         assert all(v > 0 for v in results[f"{method}_depth"])
@@ -171,33 +171,33 @@ def test_run_experiment_timeout():
         "regex": "(0)*1(0)*",
         "regex_complement": False,
         "system_sizes": [4],
-        "methods": ["SeqRLSP", "TreeRLSP"],
+        "methods": ["SeqUnitRLSP", "TreeRLSP"],
         "timeout": 60,
     }
     results = run_experiment(config)
-    for method in ["SeqRLSP", "TreeRLSP"]:
+    for method in ["SeqUnitRLSP", "TreeRLSP"]:
         assert all(v > 0 for v in results[f"{method}_depth"])
 
 def test_run_experiment_timeout_skips_subsequent():
     from RLSComp.run_experiment import run_experiment, RUNNERS, _MethodTimeout
     import math
-    original = RUNNERS["SeqRLSP"]
+    original = RUNNERS["SeqUnitRLSP"]
     def fake_runner(n, config):
         raise _MethodTimeout()
-    RUNNERS["SeqRLSP"] = fake_runner
+    RUNNERS["SeqUnitRLSP"] = fake_runner
     try:
         config = {
             "input_type": "regex",
             "regex": "(0)*1(0)*",
             "regex_complement": False,
             "system_sizes": [4, 6, 8],
-            "methods": ["SeqRLSP"],
+            "methods": ["SeqUnitRLSP"],
             "timeout": 60,
         }
         results = run_experiment(config)
-        assert all(math.isnan(v) for v in results["SeqRLSP_depth"])
+        assert all(math.isnan(v) for v in results["SeqUnitRLSP_depth"])
     finally:
-        RUNNERS["SeqRLSP"] = original
+        RUNNERS["SeqUnitRLSP"] = original
 
 def test_run_experiment_readme_config():
     """Mirrors the README example config with all listed methods at small system sizes."""
@@ -207,7 +207,7 @@ def test_run_experiment_readme_config():
         "regex": "(0)*1(0)*",
         "regex_complement": False,
         "system_sizes": [4, 5],
-        "methods": ["SeqRLSP", "TreeRLSP", "qualtran", "qiskit", "gleinig_sparse", "bartschi2019_dicke"],
+        "methods": ["SeqUnitRLSP", "TreeRLSP", "qualtran", "qiskit", "gleinig_sparse", "bartschi2019_dicke"],
         "ancilla_dim": 2,
     }
     results = run_experiment(config)
@@ -215,5 +215,5 @@ def test_run_experiment_readme_config():
     for method in config["methods"]:
         for field in ["qubits", "depth", "2gates", "gates", "time"]:
             assert len(results[f"{method}_{field}"]) == 2
-    for method in ["SeqRLSP", "TreeRLSP"]:
+    for method in ["SeqUnitRLSP", "TreeRLSP"]:
         assert all(v > 0 for v in results[f"{method}_depth"])
