@@ -1,3 +1,4 @@
+run_sec56_sec57.py
 misc/*
 outputs/*
 !outputs/.gitkeep
