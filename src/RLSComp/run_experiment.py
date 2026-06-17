@@ -226,17 +226,20 @@ RUNNERS = {
 class _MethodTimeout(Exception):
     pass
 
-def _timeout_handler(signum, frame):
-    raise _MethodTimeout()
-
 def run_method(method, n, config):
     if method not in RUNNERS:
         print(f"Unknown method: {method}")
         return np.nan, np.nan, np.nan, np.nan, np.nan, None
 
     timeout = config.get("timeout", 36000)
+    timed_out = False
+    def _handler(signum, frame):
+        nonlocal timed_out
+        timed_out = True
+        raise _MethodTimeout()
+
     try:
-        old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
+        old_handler = signal.signal(signal.SIGALRM, _handler)
         signal.alarm(timeout)
         result = RUNNERS[method](n, config)
         signal.alarm(0)
@@ -246,9 +249,12 @@ def run_method(method, n, config):
         signal.signal(signal.SIGALRM, old_handler)
         print(f"Timeout: {method} at n={n} exceeded {timeout}s, skipping...", flush=True)
         raise
-    except Exception as e:
+    except BaseException as e:
         signal.alarm(0)
         signal.signal(signal.SIGALRM, old_handler)
+        if timed_out:
+            print(f"Timeout: {method} at n={n} exceeded {timeout}s, skipping...", flush=True)
+            raise _MethodTimeout()
         print(f"Failed running {method} at n={n}")
         print(e)
         return np.nan, np.nan, np.nan, np.nan, np.nan, None
