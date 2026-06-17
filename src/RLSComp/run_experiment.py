@@ -8,6 +8,7 @@ import numpy as np
 import time
 import signal
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 #plt.style.use('misc/plot_style.mplstyle')
 
 from .regex_utils import regex_to_dfa, list_to_acdfa_direct, accepted_strings
@@ -311,34 +312,79 @@ def run_experiment(config, output_path=None):
 
 
 def plot_results(config, results):
-    plot_quantities = {"qubits":("Qubits", "linear"), "depth":("Depth", "log"),"2gates":("Two Qubits Gates", "log"), "gates":("Gates", "log"), "time":("Time (seconds)", "log")}
-    n_plots = len(plot_quantities)
-    ncols = 2
-    nrows = (n_plots + ncols - 1) // ncols  # auto-expand rows as needed
-    fig, axes = plt.subplots(nrows, ncols, figsize=(6.5, 3 * nrows), sharex=True)
+
+    plot_quantities = {
+        "depth": ("Depth", "log"),
+        "gates": ("Gates", "log"),
+        "time": ("Compilation Time (seconds)", "log"),
+    }
+    method_res_key = {
+        "SeqRLSP": ("SeqRLSP", "SeqRLSP", "-"),
+        "SeqUnitRLSP": ("SeqUnitRLSP", "SeqUnitRLSP", "-"),
+        "TreeRLSP": ("TreeRLSP", "TreeRLSP", "-"),
+        "qiskit": ("qiskit", "Qiskit", "--"),
+        "qualtran": ("qualtran", "Qualtran", "--"),
+        "bartschi2019_dicke": ("bartschi2019_dicke", "Bärtschi 2019", "--"),
+        "gleinig_sparse": ("gleinig_sparse", "Gleinig 2021", "--"),
+    }
+
+    ncols = len(plot_quantities)
+    nrows = 1
+    fig, axes = plt.subplots(nrows, ncols, figsize=(2.7 * ncols, 2.7 * nrows), sharex=True, layout="constrained")
     axes = axes.flatten()
-    method_res_key = {  "qiskit": ("Qiskit", "--"),
-                        "qualtran": ("Qualtran", "--"),
-                        "bartschi2019_dicke": ("Bärtschi 2019", "--"),
-                        "gleinig_sparse": ("Gleinig 2021", "--"),
-                        "SeqUnitRLSP": ("SeqUnitRLSP", "-"),
-                        "SeqRLSP": ("SeqRLSP", "-"),
-                        "TreeRLSP": ("TreeRLSP", "-")}
+
+    chosen_methods = config.get("methods", list(method_res_key.keys()))
+    x_vals = results.get("sizes")
+
+    ax_idx = 0
     for ax, (quantity, (ylabel, yscale)) in zip(axes, plot_quantities.items()):
-        for method in config["methods"]:
-            method_name, method_linestyle = method_res_key.get(method, None)
-            if method is None:
+        for method in chosen_methods:
+            entry = method_res_key.get(method)
+            if entry is None:
                 continue
-            x_vals = results.get(f"sizes")
-            y_vals = results.get(f"{method}_{quantity}", [np.nan] * len(x_vals))
-            ax.plot(x_vals, y_vals, label=method_name, linestyle=method_linestyle)
-            ax.set_ylabel(ylabel)
-            ax.set_xlabel("System Size")
-            if yscale == "log":
-                ax.set_yscale("log")
-            ax.grid(True)
-    fig.tight_layout()
-    axes[0].legend(loc='upper left', fontsize='small', ncol=2, frameon=False)
+            method_key, method_name, method_linestyle = entry
+            y_vals = results.get(f"{method_key}_{quantity}", [np.nan] * len(x_vals))
+            ax.plot(x_vals, y_vals, label=method_name, linestyle=method_linestyle, marker="x", markersize=3.5, linewidth=1)
+            ax.set_xlim([x_vals[0], x_vals[-1]])
+        ax.set_ylabel(ylabel)
+        if x_vals[-1] >= 250:
+            ax.set_xticks([0, 50, 100, 150, 200, 250])
+        elif x_vals[-1] >= 100:
+            ax.set_xticks([0, 25, 50, 75, 100])
+        elif x_vals[-1] >= 64:
+            ax.set_xticks([0, 8, 16, 24, 32, 40, 48, 56, 64])
+        if yscale == "log":
+            ax.set_yscale("log")
+        ax.text(
+            -0.11, 0.94,
+            f"({chr(97 + ax_idx)})",
+            transform=ax.transAxes,
+            fontsize=12, fontweight="bold",
+            va="bottom", ha="right",
+        )
+        ax_idx += 1
+
+    if "qualtran" in chosen_methods:
+        qualtran_qubits = results.get("qualtran_qubits")
+        qualtran_ancillas = [(anc - qub) if anc is not None else None for (anc, qub) in zip(qualtran_qubits, x_vals)]
+
+        if ncols == 2:
+            inset_loc = "upper right"
+            inset_pad = 0.3
+        else:
+            inset_loc = "lower right"
+            inset_pad = 1.5
+        ax_inset = inset_axes(axes[1], width="40%", height="30%", loc=inset_loc, borderpad=inset_pad)
+        ax_inset.plot(x_vals, qualtran_ancillas, color='C3', linestyle="--", linewidth=1, marker="x", markersize="3.5")
+        ax_inset.set_ylabel("Qualtran Anc.", fontsize='7')
+        ax_inset.tick_params(labelsize=7)
+        if ncols == 3:
+            axes[1].set_xlabel("System Size, $N$")
+        else:
+            axes[0].set_xlabel("System Size, $N$")
+            axes[1].set_xlabel("System Size, $N$")
+
+    axes[0].legend(loc='lower right', fontsize='7', ncol=1, frameon=False)
     path = config.get("plot_output", "results_plot.pdf")
     plt.savefig(path, bbox_inches='tight')
     plt.show()
