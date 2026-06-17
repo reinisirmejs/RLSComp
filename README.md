@@ -153,7 +153,19 @@ methods: [SeqRLSP, TreeRLSP, qualtran, qiskit, gleinig_sparse, bartschi2019_dick
 
 plotting: True
 plot_output: figs/my_experiment_plot.pdf
+
+# Optional: per-method timeout in seconds (default: 36000 = 10h).
+# If a method exceeds this, it is skipped for all subsequent system sizes.
+timeout: 300
+
+# Optional: per-method maximum system size. Methods not listed have no limit.
+method_max_n:
+  qiskit: 14
+  qualtran: 24
+  gleinig_sparse: 64
 ```
+
+For large-scale experiments, the `timeout` and `method_max_n` options help manage resources. The timeout applies per method per system size — if a method exceeds it, that method is automatically skipped for all remaining (larger) sizes. The `method_max_n` dictionary lets you set hard system-size caps for individual methods, overriding the built-in defaults. Results are saved incrementally after each system size, so partial results are preserved even if the process is interrupted.
 
 ## Citation
 

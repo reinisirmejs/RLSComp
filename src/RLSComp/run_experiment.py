@@ -6,6 +6,7 @@ import yaml
 import pickle
 import numpy as np
 import time
+import signal
 import matplotlib.pyplot as plt
 #plt.style.use('misc/plot_style.mplstyle')
 
@@ -213,26 +214,48 @@ def run_gleinig_sparse(n, config):
     print("Gleinig time was: ", gleinig_time, flush=True)
     return qubits, depth, two_gates, all_gates, gleinig_time, circ
 
+RUNNERS = {
+    "SeqRLSP": run_SeqRLSP,
+    "SeqIsoRLSP": run_SeqIsoRLSP,
+    "TreeRLSP": run_TreeRLSP,
+    "qiskit": run_qiskit,
+    "qualtran": run_qualtran,
+    "bartschi2019_dicke": run_bartschi2019_dicke,
+    "gleinig_sparse": run_gleinig_sparse,
+}
+
+class _MethodTimeout(Exception):
+    pass
+
+def _timeout_handler(signum, frame):
+    raise _MethodTimeout()
+
 def run_method(method, n, config):
-    RUNNERS = {
-        "SeqRLSP": run_SeqRLSP,
-        "SeqIsoRLSP": run_SeqIsoRLSP,
-        "TreeRLSP": run_TreeRLSP,
-        "qiskit": run_qiskit,
-        "qualtran": run_qualtran,
-        "bartschi2019_dicke": run_bartschi2019_dicke,
-        "gleinig_sparse": run_gleinig_sparse,
-    }
+    if method not in RUNNERS:
+        print(f"Unknown method: {method}")
+        return np.nan, np.nan, np.nan, np.nan, np.nan, None
+
+    timeout = config.get("timeout", 36000)
     try:
-        runner = RUNNERS[method]
-        return runner(n, config)
+        old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
+        signal.alarm(timeout)
+        result = RUNNERS[method](n, config)
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old_handler)
+        return result
+    except _MethodTimeout:
+        signal.signal(signal.SIGALRM, old_handler)
+        print(f"Timeout: {method} at n={n} exceeded {timeout}s, skipping...", flush=True)
+        raise
     except Exception as e:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old_handler)
         print(f"Failed running {method} at n={n}")
         print(e)
         return np.nan, np.nan, np.nan, np.nan, np.nan, None
 
 
-def run_experiment(config):
+def run_experiment(config, output_path=None):
     sizes = config["system_sizes"]
     methods = config["methods"]
 
@@ -246,13 +269,27 @@ def run_experiment(config):
         for field in RESULT_FIELDS:
             results[f"{method}_{field}"] = []
         results[f"{method}_circ"] = {}
+    SKIP_RESULT = (np.nan, np.nan, np.nan, np.nan, np.nan, None)
+    timed_out = set()
+    method_max_n = config.get("method_max_n", {})
     #Run the experiment for all system sizes and methods
     for n in sizes:
         sys.stdout.flush()
         print(f"\n--- Running for system size n={n} ---")
         start_time = time.perf_counter()
         for method in methods:
-            qubits, depth, two_gates, all_gates, run_time, circ = run_method(method, n, config)
+            if method in timed_out:
+                print(f"Skipping {method} at n={n} (timed out at smaller size)", flush=True)
+                qubits, depth, two_gates, all_gates, run_time, circ = SKIP_RESULT
+            elif method in method_max_n and n > method_max_n[method]:
+                print(f"Skipping {method} at n={n} (exceeds max_n={method_max_n[method]})", flush=True)
+                qubits, depth, two_gates, all_gates, run_time, circ = SKIP_RESULT
+            else:
+                try:
+                    qubits, depth, two_gates, all_gates, run_time, circ = run_method(method, n, config)
+                except _MethodTimeout:
+                    timed_out.add(method)
+                    qubits, depth, two_gates, all_gates, run_time, circ = SKIP_RESULT
             results[f"{method}_qubits"].append(qubits)
             results[f"{method}_depth"].append(depth)
             results[f"{method}_2gates"].append(two_gates)
@@ -262,6 +299,9 @@ def run_experiment(config):
                 results[f"{method}_circ"][n] = circ
         end_time = time.perf_counter()
         print(f'System size {n} took {end_time-start_time} seconds')
+        if output_path is not None:
+            with open(output_path, "wb") as f:
+                pickle.dump(results, f)
     return results
 
 
@@ -304,11 +344,8 @@ def main():
     args = parser.parse_args()
     with open(args.config, "r") as f:
         config = yaml.safe_load(f)
-    results = run_experiment(config)
-    # Save the results to a pickle file
-    output_dict_name  = "outputs/" + config.get("experiment", "results") + ".pkl"
-    with open(output_dict_name, "wb") as f:
-        pickle.dump(results, f)
+    output_dict_name = "outputs/" + config.get("experiment", "results") + ".pkl"
+    results = run_experiment(config, output_path=output_dict_name)
     #Plot the results if needed
     if config["plotting"]:
         plot_results(config, results)

@@ -131,6 +131,23 @@ def test_run_experiment_run_TreeRLSP():
     assert all_gates > 0
     assert time_taken >= 0
 
+def test_run_experiment_method_max_n():
+    from RLSComp.run_experiment import run_experiment
+    import math
+    config = {
+        "input_type": "regex",
+        "regex": "(0)*1(0)*",
+        "regex_complement": False,
+        "system_sizes": [4, 6, 8],
+        "methods": ["SeqRLSP", "TreeRLSP"],
+        "method_max_n": {"TreeRLSP": 5},
+    }
+    results = run_experiment(config)
+    assert all(v > 0 for v in results["SeqRLSP_depth"])
+    assert results["TreeRLSP_depth"][0] > 0
+    assert math.isnan(results["TreeRLSP_depth"][1])
+    assert math.isnan(results["TreeRLSP_depth"][2])
+
 def test_run_experiment_end_to_end():
     from RLSComp.run_experiment import run_experiment
     config = {
@@ -146,6 +163,41 @@ def test_run_experiment_end_to_end():
         for field in ["qubits", "depth", "2gates", "gates", "time"]:
             assert len(results[f"{method}_{field}"]) == 2
         assert all(v > 0 for v in results[f"{method}_depth"])
+
+def test_run_experiment_timeout():
+    from RLSComp.run_experiment import run_experiment
+    config = {
+        "input_type": "regex",
+        "regex": "(0)*1(0)*",
+        "regex_complement": False,
+        "system_sizes": [4],
+        "methods": ["SeqRLSP", "TreeRLSP"],
+        "timeout": 60,
+    }
+    results = run_experiment(config)
+    for method in ["SeqRLSP", "TreeRLSP"]:
+        assert all(v > 0 for v in results[f"{method}_depth"])
+
+def test_run_experiment_timeout_skips_subsequent():
+    from RLSComp.run_experiment import run_experiment, RUNNERS, _MethodTimeout
+    import math
+    original = RUNNERS["SeqRLSP"]
+    def fake_runner(n, config):
+        raise _MethodTimeout()
+    RUNNERS["SeqRLSP"] = fake_runner
+    try:
+        config = {
+            "input_type": "regex",
+            "regex": "(0)*1(0)*",
+            "regex_complement": False,
+            "system_sizes": [4, 6, 8],
+            "methods": ["SeqRLSP"],
+            "timeout": 60,
+        }
+        results = run_experiment(config)
+        assert all(math.isnan(v) for v in results["SeqRLSP_depth"])
+    finally:
+        RUNNERS["SeqRLSP"] = original
 
 def test_run_experiment_readme_config():
     """Mirrors the README example config with all listed methods at small system sizes."""
